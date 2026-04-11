@@ -7,8 +7,6 @@ export default function AppShell() {
   const [authenticated, setAuthenticated] = useState(false)
   const [activeSection,  setActiveSection] = useState('Dashboard')
 
-  const handleLogout = () => setAuthenticated(false)
-
   if (!authenticated) {
     return <LoginPage onLogin={() => setAuthenticated(true)} />
   }
@@ -19,7 +17,7 @@ export default function AppShell() {
       <div className="flex-1 overflow-hidden">
         <SuperAdminDashboard
           onSectionChange={setActiveSection}
-          onLogout={handleLogout}
+          onLogout={() => setAuthenticated(false)}
         />
       </div>
     </div>
