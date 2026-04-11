@@ -28,6 +28,9 @@ import LocationCityIcon       from '@mui/icons-material/LocationCity'
 import Groups2Icon            from '@mui/icons-material/Groups2'
 import SecurityIcon           from '@mui/icons-material/Security'
 import MonitorHeartIcon       from '@mui/icons-material/MonitorHeart'
+
+import FavoriteIcon          from '@mui/icons-material/Favorite'
+import TrendingUpIcon        from '@mui/icons-material/TrendingUp'
 import HomeWorkIcon           from '@mui/icons-material/HomeWork'
 import BadgeIcon              from '@mui/icons-material/Badge'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
@@ -41,6 +44,7 @@ import RoadIcon               from '@mui/icons-material/Landscape'
 // ── Import modals from ./modals/ ──────────────────────────
 import ChangePasswordModal   from './modals/ChangePasswordModal'
 import NewRegistrationModal  from './modals/NewRegistrationModal'
+import { TZ_GEO, getRegions, getDistricts, getVillages, getRegionsByJurisdiction } from './data/tanzania'
 import AllRegionsModal       from './modals/AllRegionsModal'
 import AllActionsModal       from './modals/AllActionsModal'
 
@@ -133,6 +137,10 @@ const NAV = [
   { label:'System Performance',  Icon:SpeedIcon           },
   { label:'System Log Reports',  Icon:ArticleIcon         },
   { label:'Security Alerts',     Icon:GppBadIcon          },
+  { label:'Health Officers',      Icon:LocalHospitalIcon    },
+  { label:'Migration Trends',     Icon:TrendingUpIcon       },
+  { label:'Marriage Issues',      Icon:FavoriteIcon         },
+  { label:'Health Trends',        Icon:MonitorHeartIcon     },
 ]
 
 const STATS = [
@@ -172,40 +180,8 @@ const PyramidTooltip = ({ active, payload, label }) => {
   )
 }
 
-// ── DISTRICTS & VILLAGES DATA ─────────────────────────────
-const districtsByRegion = {
-  'Dar es Salaam':['Ilala','Kinondoni','Temeke','Ubungo','Kigamboni'],
-  'Arusha':       ['Arusha City','Meru','Monduli','Ngorongoro','Longido'],
-  'Dodoma':       ['Dodoma City','Bahi','Chamwino','Chemba','Kondoa'],
-  'Mwanza':       ['Ilemela','Nyamagana','Magu','Kwimba','Sengerema'],
-  'Mbeya':        ['Mbeya City','Chunya','Kyela','Mbarali','Rungwe'],
-  'Tanga':        ['Tanga City','Handeni','Kilindi','Korogwe','Lushoto'],
-  'Kilimanjaro':  ['Moshi Urban','Moshi Rural','Hai','Mwanga','Same'],
-  'Morogoro':     ['Morogoro Urban','Kilosa','Kilombero','Ulanga','Mvomero'],
-  'Kagera':       ['Bukoba Urban','Bukoba Rural','Biharamulo','Karagwe','Muleba'],
-  'Mara':         ['Musoma Urban','Musoma Rural','Bunda','Rorya','Serengeti'],
-  'Manyara':      ['Babati Urban','Babati Rural','Hanang','Kiteto','Mbulu'],
-  'Tabora':       ['Tabora Urban','Igunga','Kaliua','Nzega','Sikonge'],
-  'Kigoma':       ['Kigoma Urban','Buhigwe','Kakonko','Kibondo','Kasulu'],
-  'Singida':      ['Singida Urban','Ikungi','Iramba','Manyoni','Mkalama'],
-  'Kagera':       ['Bukoba Urban','Bukoba Rural','Biharamulo','Karagwe','Muleba'],
-  'Zanzibar North':['Kaskazini A','Kaskazini B'],
-  'Zanzibar South':['Kusini','Kati'],
-  'Zanzibar West': ['Mjini','Magharibi A','Magharibi B'],
-  'Pemba North':   ['Micheweni','Wete'],
-  'Pemba South':   ['Chake Chake','Mkoani'],
-}
-const villagesByDistrict = {
-  'Ilala':        ['Buguruni','Chang\'ombe','Gerezani','Kariakoo','Kivukoni'],
-  'Kinondoni':    ['Magomeni','Makuburi','Mbezi','Msasani','Sinza'],
-  'Temeke':       ['Azimio','Chamazi','Chang\'ombe','Keko','Miburani'],
-  'Ilemela':      ['Buswelu','Igogo','Kiloleli','Kirumba','Mkolani'],
-  'Nyamagana':    ['Bwiru','Isamilo','Mahina','Mirongo','Nyegezi'],
-  'Dodoma City':  ['Chamwino','Ipagala','Kikuyu','Makulu','Nzuguni'],
-  'Moshi Urban':  ['Bondeni','Kaloleni','Karanga','Mji Mwema','Rau'],
-  'Arusha City':  ['Elerai','Kimandolu','Levolosi','Moshono','Ngarenaro'],
-  'Mbeya City':   ['Iyela','Kalobe','Mwansekwa','Nsalaga','Sisimba'],
-}
+// ── GEO HELPERS (from tanzania.js) ──────────────────────
+// TZ_GEO imported at top — use getRegions/getDistricts/getVillages
 
 // ══════════════════════════════════════════════════════════
 // ── DEMOGRAPHICS FILTER BAR ───────────────────────────────
@@ -222,14 +198,13 @@ function DemographicsFilterBar({ onFilterChange, darkMode, t }) {
   const [showDisDD,      setShowDisDD]      = useState(false)
   const [showVilDD,      setShowVilDD]      = useState(false)
 
-  const scopeRegions     = allRegions.filter(r => scope === 'national' ? true : r.jurisdiction === scope)
+  const scopeRegions     = getRegionsByJurisdiction(scope).map(name => ({ name, code: name.slice(0,3).toUpperCase(), ...TZ_GEO[name] }))
   const filteredRegions  = scopeRegions.filter(r =>
-    r.name.toLowerCase().includes(regionSearch.toLowerCase()) ||
-    r.code.toLowerCase().includes(regionSearch.toLowerCase())
+    r.name.toLowerCase().includes(regionSearch.toLowerCase())
   )
-  const availableDistricts = districtsByRegion[region] || []
+  const availableDistricts = getDistricts(region)
   const filteredDistricts  = availableDistricts.filter(d => d.toLowerCase().includes(districtSearch.toLowerCase()))
-  const availableVillages  = villagesByDistrict[district] || []
+  const availableVillages  = getVillages(region, district)
   const filteredVillages   = availableVillages.filter(v => v.toLowerCase().includes(villageSearch.toLowerCase()))
 
   const handleScope = (s) => {
@@ -589,14 +564,9 @@ function DemographicsContent({ darkMode, t }) {
   const scopeLabel = activeFilter.village || activeFilter.district || activeFilter.region || activeFilter.scope
 
   const DEMOGRAPHIC_CARDS = [
-    { label:'Total Population',  value:'63,748,291', sub:'Status: Alive only',    color:'text-[#00ff9d]', bg:'bg-[#00ff9d]/10 border-[#00ff9d]/20' },
-    { label:'Male Population',   value:'31,364,159', sub:'49.2% of total',        color:'text-[#00d4ff]', bg:'bg-[#00d4ff]/10 border-[#00d4ff]/20' },
-    { label:'Female Population', value:'32,384,132', sub:'50.8% of total',        color:'text-[#ff6b9d]', bg:'bg-[#ff6b9d]/10 border-[#ff6b9d]/20' },
-    { label:'Registered Births', value:'1,247,320',  sub:'This year',             color:'text-blue-400',  bg:'bg-blue-500/10 border-blue-500/20'   },
-    { label:'Registered Deaths', value:'312,840',    sub:'This year',             color:'text-red-400',   bg:'bg-red-500/10 border-red-500/20'     },
-    { label:'Active Migrations', value:'4,891',      sub:'Pending confirmations', color:'text-yellow-400',bg:'bg-yellow-500/10 border-yellow-500/20'},
-    { label:'Active Marriages',  value:'12,340,210', sub:'Registered couples',    color:'text-purple-400',bg:'bg-purple-500/10 border-purple-500/20'},
-    { label:'Disability Status', value:'2,140,000',  sub:'3.4% of population',    color:'text-orange-400',bg:'bg-orange-500/10 border-orange-500/20'},
+    { label:'Total Population',  value:'63,748,291', sub:'Status: Alive only', color:'text-[#00ff9d]', bg:'bg-[#00ff9d]/10 border-[#00ff9d]/20' },
+    { label:'Male Population',   value:'31,364,159', sub:'49.2% of total',     color:'text-[#00d4ff]', bg:'bg-[#00d4ff]/10 border-[#00d4ff]/20' },
+    { label:'Female Population', value:'32,384,132', sub:'50.8% of total',     color:'text-[#ff6b9d]', bg:'bg-[#ff6b9d]/10 border-[#ff6b9d]/20' },
   ]
 
   const EDUCATION = [
@@ -823,6 +793,10 @@ function InfrastructureContent({ darkMode, t }) {
             </tbody>
           </table>
         </div>
+        <div className={`px-5 py-3 border-t ${t.border} flex items-center justify-between`}>
+          <span className={`text-[10px] font-mono ${t.textDim}`}>Showing 8 of {allRegions.length} regions</span>
+          <button className="text-[#00d4ff] text-[10px] font-mono hover:underline">View All →</button>
+        </div>
       </div>
     </div>
   )
@@ -891,14 +865,15 @@ function DistrictAdminsContent({ darkMode, t, onNewReg }) {
           <table className="w-full text-xs">
             <thead>
               <tr className={`border-b ${t.border}`}>
-                {['ID','Name','Region','District','Status','MFA','Joined','Actions'].map(h => (
+                {['#','ID','Name','Region','District','Status','MFA','Joined','Actions'].map(h => (
                   <th key={h} className={`px-4 py-3 text-left text-[9px] font-mono uppercase tracking-widest ${t.textDim}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map(a => (
+              {filtered.map((a, i) => (
                 <tr key={a.id} className={`border-b ${t.border} ${t.rowHover} transition-all`}>
+                  <td className={`px-4 py-3 text-[10px] font-mono ${t.textDim}`}>{i+1}/{filtered.length}</td>
                   <td className={`px-4 py-3 font-mono text-[10px] ${t.textDim}`}>{a.id}</td>
                   <td className={`px-4 py-3 font-semibold ${t.text}`}>{a.name}</td>
                   <td className={`px-4 py-3 ${t.textSub}`}>{a.region}</td>
@@ -936,12 +911,12 @@ function DistrictAdminsContent({ darkMode, t, onNewReg }) {
 function VillageOfficersContent({ darkMode, t }) {
   const [search, setSearch] = useState('')
   const OFFICERS = [
-    { id:'VO-0891', name:'Juma Mwanga Salehe',   region:'Dodoma',       district:'Chamwino',   village:'Nzuguni',   status:'ACTIVE',  records:340 },
-    { id:'VO-0892', name:'Neema Fumo Chande',    region:'Dar es Salaam',district:'Temeke',     village:'Keko',      status:'ACTIVE',  records:512 },
-    { id:'VO-0893', name:'Hassan Mtoro Bakari',  region:'Mwanza',       district:'Ilemela',    village:'Igogo',     status:'ACTIVE',  records:289 },
-    { id:'VO-0894', name:'Upendo Ngowi Mbise',   region:'Kilimanjaro',  district:'Moshi Urban',village:'Karanga',   status:'PENDING', records:0   },
-    { id:'VO-0895', name:'Rashidi Tito Hamisi',  region:'Arusha',       district:'Arusha City',village:'Ngarenaro', status:'ACTIVE',  records:421 },
-    { id:'VO-0896', name:'Miriam Ally Chuma',    region:'Tanga',        district:'Tanga City', village:'Chumbageni',status:'ACTIVE',  records:198 },
+    { id:'VO-0891', name:'Juma Mwanga Salehe',   region:'Dodoma',       district:'Chamwino',   village:'Nzuguni',   status:'ACTIVE',  offline:false },
+    { id:'VO-0892', name:'Neema Fumo Chande',    region:'Dar es Salaam',district:'Temeke',     village:'Keko',      status:'ACTIVE',  offline:false },
+    { id:'VO-0893', name:'Hassan Mtoro Bakari',  region:'Mwanza',       district:'Ilemela',    village:'Igogo',     status:'ACTIVE',  offline:false },
+    { id:'VO-0894', name:'Upendo Ngowi Mbise',   region:'Kilimanjaro',  district:'Moshi Urban',village:'Karanga',   status:'PENDING', offline:true   },
+    { id:'VO-0895', name:'Rashidi Tito Hamisi',  region:'Arusha',       district:'Arusha City',village:'Ngarenaro', status:'ACTIVE',  offline:false },
+    { id:'VO-0896', name:'Miriam Ally Chuma',    region:'Tanga',        district:'Tanga City', village:'Chumbageni',status:'ACTIVE',  offline:true },
   ]
   const filtered = OFFICERS.filter(o =>
     o.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -955,9 +930,6 @@ function VillageOfficersContent({ darkMode, t }) {
           <h1 className={`font-bold text-xl sm:text-2xl ${t.text}`}>Village Officers</h1>
           <p className={`text-xs mt-0.5 ${t.textSub}`}>{filtered.length} village-level officers</p>
         </div>
-        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#00ff9d]/10 border border-[#00ff9d]/30 text-[#00ff9d] hover:bg-[#00ff9d]/20 transition-all text-xs font-medium">
-          <Plus size={13} /> Register Village Officer
-        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -983,7 +955,7 @@ function VillageOfficersContent({ darkMode, t }) {
         <table className="w-full text-xs">
           <thead>
             <tr className={`border-b ${t.border}`}>
-              {['Officer ID','Name','Region','District','Village','Records','Status'].map(h => (
+              {['Officer ID','Name','Region','District','Village','Offline','Status','#'].map(h => (
                 <th key={h} className={`px-4 py-3 text-left text-[9px] font-mono uppercase tracking-widest ${t.textDim}`}>{h}</th>
               ))}
             </tr>
@@ -1360,7 +1332,7 @@ function SecurityAlertsContent({ darkMode, t }) {
 // ══════════════════════════════════════════════════════════
 // ── MAIN COMPONENT ────────────────────────────────────────
 // ══════════════════════════════════════════════════════════
-export default function SuperAdminDashboard({ onSectionChange }) {
+export default function SuperAdminDashboard({ onSectionChange, onLogout }) {
   const [sidebarOpen,  setSidebarOpen]  = useState(false)
   const [activeNav,    setActiveNav]    = useState('Dashboard')
   const [darkMode,     setDarkMode]     = useState(false)
@@ -1420,6 +1392,10 @@ export default function SuperAdminDashboard({ onSectionChange }) {
       case 'System Performance':  return <SystemPerformanceContent darkMode={darkMode} t={t} />
       case 'System Log Reports':  return <LogReportsContent darkMode={darkMode} t={t} />
       case 'Security Alerts':     return <SecurityAlertsContent darkMode={darkMode} t={t} />
+      case 'Health Officers':     return <HealthOfficersContent darkMode={darkMode} t={t} />
+      case 'Migration Trends':    return <MigrationTrendsContent darkMode={darkMode} t={t} />
+      case 'Marriage Issues':     return <MarriageIssuesContent darkMode={darkMode} t={t} />
+      case 'Health Trends':       return <HealthTrendsContent darkMode={darkMode} t={t} />
       default:                    return null
     }
   }
@@ -1472,7 +1448,7 @@ export default function SuperAdminDashboard({ onSectionChange }) {
         </nav>
 
         <div className={`p-2 border-t ${t.border}`}>
-          <button className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all text-[11px] font-medium border border-transparent">
+          <button onClick={onLogout} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all text-[11px] font-medium border border-transparent">
             <LogoutIcon sx={{ fontSize:15 }} /> Logout
           </button>
         </div>

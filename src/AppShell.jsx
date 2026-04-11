@@ -7,18 +7,20 @@ export default function AppShell() {
   const [authenticated, setAuthenticated] = useState(false)
   const [activeSection,  setActiveSection] = useState('Dashboard')
 
+  const handleLogout = () => setAuthenticated(false)
+
   if (!authenticated) {
     return <LoginPage onLogin={() => setAuthenticated(true)} />
   }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#060f1e]">
-      {/* Fixed institutional banner — bg image changes per section */}
       <NBSHeader activeSection={activeSection} />
-
-      {/* Dashboard fills remaining height */}
       <div className="flex-1 overflow-hidden">
-        <SuperAdminDashboard onSectionChange={setActiveSection} />
+        <SuperAdminDashboard
+          onSectionChange={setActiveSection}
+          onLogout={handleLogout}
+        />
       </div>
     </div>
   )
