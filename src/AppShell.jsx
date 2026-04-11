@@ -4,8 +4,8 @@ import NBSHeader           from './NBSHeader'
 import SuperAdminDashboard from './SuperAdminDashboard'
 
 export default function AppShell() {
-  const [authenticated,  setAuthenticated]  = useState(false)
-  const [activeSection,  setActiveSection]  = useState('Dashboard')
+  const [authenticated, setAuthenticated] = useState(false)
+  const [activeSection,  setActiveSection] = useState('Dashboard')
 
   if (!authenticated) {
     return <LoginPage onLogin={() => setAuthenticated(true)} />
@@ -13,7 +13,7 @@ export default function AppShell() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#060f1e]">
-      {/* NBSHeader is fixed — passes activeSection for bg image switching */}
+      {/* Fixed institutional banner — bg image changes per section */}
       <NBSHeader activeSection={activeSection} />
 
       {/* Dashboard fills remaining height */}
