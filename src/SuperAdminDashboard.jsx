@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import {
   Menu, X, Search, Bell, Settings, Sun, Moon, ChevronRight, ArrowUpRight, Plus,
   TrendingUp, Eye, CheckCircle2, RefreshCw, AlertTriangle, KeyRound,
-  LogOut as LogOutLucide, ShieldCheck, ChevronDown, Lock, Mail, EyeOff,
+  LogOut as LogOutLucide, Shield, ShieldCheck, ChevronDown, Lock, Mail, EyeOff,
   CheckCircle, AlertCircle, Download, Wifi, WifiOff, Activity, UserCheck,
   UserX, Clock, Database, Server, Cpu, HardDrive, Globe, FileText,
   ShieldAlert, MoreVertical, Trash2, Edit3, ChevronLeft, ChevronUp,
@@ -357,6 +357,11 @@ function DemographicsContent({darkMode,t}){
     {label:'Male Population',   value:Math.round(31364159*m).toLocaleString(), sub:'49.2% of total',        color:'text-[#00d4ff]',bg:'bg-[#00d4ff]/10 border-[#00d4ff]/20'},
     {label:'Female Population', value:Math.round(32384132*m).toLocaleString(), sub:'50.8% of total',        color:'text-[#ff6b9d]',bg:'bg-[#ff6b9d]/10 border-[#ff6b9d]/20'},
   ]
+  const EMPLOYMENT=[
+    {label:'Government Employees',note:'Teachers, Doctors, Officers',pct:18.4,color:'bg-[#00d4ff]',text:'text-[#00d4ff]'},
+    {label:'Self Employed',        note:'Farmers, Business, Traders', pct:47.2,color:'bg-[#00ff9d]',text:'text-[#00ff9d]'},
+    {label:'Others',               note:'Private Sector, NGO, etc.',  pct:34.4,color:'bg-orange-400',text:'text-orange-400'},
+  ]
   const EDUCATION=[
     {level:'No Education',pct:18},{level:'Primary',pct:35},{level:'O-Level',pct:22},
     {level:'A-Level',pct:8},{level:'Certificate',pct:5},{level:'Diploma',pct:5},
@@ -374,6 +379,26 @@ function DemographicsContent({darkMode,t}){
             <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full border ${color} ${bg}`}>{sub}</span>
           </div>
         ))}
+      </div>
+      {/* Employment Status Card */}
+      <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center"><span className="text-xs">💼</span></div>
+          <div><p className={`text-xs font-bold ${t.text}`}>Employment Status</p><p className={`text-[9px] ${t.textDim}`}>Primary Activity · {scopeLabel} estimate</p></div>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {EMPLOYMENT.map(({label,note,pct,color,text})=>(
+            <div key={label}>
+              <div className="flex items-start justify-between mb-1">
+                <div><p className={`text-xs font-semibold ${t.text}`}>{label}</p><p className={`text-[9px] ${t.textDim}`}>{note}</p></div>
+                <span className={`text-sm font-bold shrink-0 ml-2 ${text}`}>{pct}%</span>
+              </div>
+              <div className={`h-1.5 rounded-full ${darkMode?'bg-gray-200':'bg-[#1e2d45]'}`}>
+                <div className={`h-1.5 rounded-full ${color} transition-all duration-700`} style={{width:`${pct}%`}}/>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
@@ -424,13 +449,63 @@ function InfrastructureContent({darkMode,t}){
   const [search,setSearch]=useState('')
   const [page,setPage]=useState(0)
   const PER_PAGE=8
-  const INFRA=[
-    {MuiIcon:SchoolIcon,       label:'Schools',           value:'19,847',  sub:'Public & Private',   color:'text-blue-400',   ibg:'bg-blue-500/10 text-blue-400',   pct:72},
-    {MuiIcon:LocalHospitalIcon,label:'Health Facilities', value:'8,432',   sub:'Hospitals & Clinics', color:'text-red-400',   ibg:'bg-red-500/10 text-red-400',     pct:58},
-    {MuiIcon:ElectricBoltIcon, label:'Electrification',   value:'68.4%',   sub:'National Coverage',   color:'text-yellow-400',ibg:'bg-yellow-500/10 text-yellow-400',pct:68},
-    {MuiIcon:WaterIcon,        label:'Clean Water Access', value:'74.2%',   sub:'Safe Water Sources',  color:'text-[#00d4ff]', ibg:'bg-[#00d4ff]/10 text-[#00d4ff]', pct:74},
-    {MuiIcon:HomeWorkIcon,     label:'Registered Housing', value:'12.4M',   sub:'Household Units',     color:'text-[#00ff9d]', ibg:'bg-[#00ff9d]/10 text-[#00ff9d]', pct:61},
-    {MuiIcon:RoadIcon,         label:'Road Network',       value:'86,472km',sub:'Paved & Unpaved',     color:'text-orange-400',ibg:'bg-orange-500/10 text-orange-400',pct:45},
+  // Infrastructure grouped categories
+  const INFRA_GROUPS=[
+    {
+      title:'Housing & Households',icon:'🏠',
+      items:[
+        {label:'Total Households',  value:'12,400,000', sub:'Registered units',      color:'text-[#00ff9d]',  pct:61},
+        {label:'Urban Households',  value:'5,890,000',  sub:'47.5% of total',        color:'text-[#00d4ff]',  pct:48},
+        {label:'Rural Households',  value:'6,510,000',  sub:'52.5% of total',        color:'text-orange-400', pct:52},
+      ]
+    },
+    {
+      title:'Business & Commerce',icon:'🏢',
+      items:[
+        {label:'Registered Businesses',value:'1,240,000',sub:'All sectors',           color:'text-purple-400', pct:55},
+        {label:'Formal Sector',         value:'340,000',  sub:'27.4% of businesses',  color:'text-[#00d4ff]',  pct:27},
+        {label:'Informal Sector',       value:'900,000',  sub:'72.6% of businesses',  color:'text-yellow-400', pct:73},
+      ]
+    },
+    {
+      title:'Transport Infrastructure',icon:'✈️',
+      items:[
+        {label:'Airports',            value:'28',        sub:'International & Domestic',color:'text-[#00d4ff]', pct:80},
+        {label:'Shipping Ports',      value:'9',         sub:'Major seaports & lake',   color:'text-blue-400',  pct:70},
+        {label:'Bus Terminals',       value:'312',       sub:'Registered terminals',     color:'text-orange-400',pct:65},
+        {label:'Tarmac Roads',        value:'14,813 km', sub:'Paved national roads',     color:'text-[#00ff9d]', pct:35},
+        {label:'Rough Roads',         value:'71,659 km', sub:'Unpaved / feeder roads',   color:'text-yellow-400',pct:65},
+        {label:'Railway (SGR)',        value:'2,561 km',  sub:'Standard Gauge Railway',   color:'text-purple-400',pct:45},
+        {label:'Railway (Normal)',     value:'3,687 km',  sub:'Conventional railway',     color:'text-gray-400',  pct:55},
+        {label:'Sports Facilities',   value:'1,840',     sub:'Stadiums & grounds',        color:'text-red-400',   pct:40},
+      ]
+    },
+    {
+      title:'Education Facilities',icon:'🎓',
+      items:[
+        {label:'Primary Schools',    value:'17,700',  sub:'Public & Private',       color:'text-blue-400',   pct:72},
+        {label:'Secondary Schools',  value:'5,143',   sub:'Ordinary & Advanced',    color:'text-[#00d4ff]',  pct:65},
+        {label:'Colleges',           value:'312',     sub:'Technical & Vocational', color:'text-[#00ff9d]',  pct:48},
+        {label:'Universities',       value:'68',      sub:'Public & Private',       color:'text-purple-400', pct:55},
+        {label:'Training Centres',   value:'892',     sub:'VETA & Skills centres',  color:'text-yellow-400', pct:42},
+      ]
+    },
+    {
+      title:'Health Facilities',icon:'🏥',
+      items:[
+        {label:'Hospitals',          value:'320',     sub:'Referral & Regional',    color:'text-red-400',    pct:58},
+        {label:'Health Centres',     value:'1,544',   sub:'Government & Private',   color:'text-orange-400', pct:62},
+        {label:'Dispensaries',       value:'6,568',   sub:'Primary care units',     color:'text-yellow-400', pct:70},
+      ]
+    },
+    {
+      title:'Religious & Industry',icon:'⛪',
+      items:[
+        {label:'Religious Facilities',  value:'84,200',  sub:'Churches, Mosques, Temples',color:'text-[#00d4ff]', pct:80},
+        {label:'Manufacturing Industries',value:'12,400', sub:'Registered factories',       color:'text-purple-400',pct:45},
+        {label:'Processing Industries',   value:'8,910',  sub:'Agro & food processing',     color:'text-orange-400',pct:38},
+      ]
+    },
   ]
   const REGIONS_INFRA=ALL_REGIONS.map((r,i)=>({...r,schools:Math.floor(200+i*180),hospitals:Math.floor(30+i*25),electricity:Math.floor(45+i*6),water:Math.floor(55+i*5),entries:Math.floor(1200+i*430)}))
   const filtered=REGIONS_INFRA.filter(r=>{
@@ -444,14 +519,26 @@ function InfrastructureContent({darkMode,t}){
     <div className="space-y-5">
       <div><h1 className={`font-bold text-xl sm:text-2xl ${t.text}`}>Infrastructure View</h1><p className={`text-xs mt-0.5 ${t.textSub}`}>National infrastructure coverage & facility mapping</p></div>
       <GeoFilterBar onFilterChange={setActiveFilter} darkMode={darkMode} t={t}/>
-      <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-        {INFRA.map(({MuiIcon,label,value,sub,color,ibg,pct})=>(
-          <div key={label} className={`${t.card} border ${t.cardBorder} rounded-xl p-4 hover:shadow-lg transition-all`}>
-            <div className="flex items-start justify-between mb-3"><div className={`w-9 h-9 rounded-lg flex items-center justify-center ${ibg}`}><MuiIcon sx={{fontSize:18}}/></div><span className={`text-sm font-bold ${color}`}>{pct}%</span></div>
-            <p className={`text-[10px] font-mono tracking-widest uppercase mb-1 ${t.textDim}`}>{label}</p>
-            <p className={`font-bold text-lg ${t.text} mb-1`}>{value}</p>
-            <p className={`text-[10px] ${t.textSub} mb-2`}>{sub}</p>
-            <div className={`h-1.5 rounded-full ${darkMode?'bg-gray-200':'bg-[#1e2d45]'}`}><div className={`h-1.5 rounded-full bg-current ${color} transition-all`} style={{width:`${pct}%`,opacity:0.8}}/></div>
+      {/* Infrastructure category groups */}
+      <div className="space-y-4">
+        {INFRA_GROUPS.map(({title,icon,items})=>(
+          <div key={title} className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">{icon}</span>
+              <p className={`font-bold text-sm ${t.text}`}>{title}</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+              {items.map(({label,value,sub,color,pct})=>(
+                <div key={label} className={`${darkMode?'bg-gray-50':'bg-[#0d1526]'} border ${t.cardBorder} rounded-lg p-3 hover:shadow-md transition-all`}>
+                  <p className={`text-[9px] font-mono tracking-widest uppercase mb-1 ${t.textDim}`}>{label}</p>
+                  <p className={`font-bold text-base ${t.text} mb-0.5`}>{value}</p>
+                  <p className={`text-[9px] ${t.textSub} mb-2`}>{sub}</p>
+                  <div className={`h-1 rounded-full ${darkMode?'bg-gray-200':'bg-[#1e2d45]'}`}>
+                    <div className={`h-1 rounded-full transition-all ${color.replace('text-','bg-')}`} style={{width:`${pct}%`,opacity:0.75}}/>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -882,14 +969,45 @@ function MarriageIssuesContent({darkMode,t}){
     {label:'Dissolved',value:'312,840',color:'text-red-400'},{label:'Pending Dissolution',value:'136,940',color:'text-yellow-400'},
   ]
   const KINDS=[{label:'Monogamous',value:'78.4%',pct:78},{label:'Potentially Polygamous',value:'14.2%',pct:14},{label:'Polygamous',value:'4.8%',pct:5},{label:'Customary/Unregistered',value:'2.6%',pct:3}]
+  // Daily 24-hr registrations/dissolutions
+  const dailyMarriage=Array.from({length:24},(_,h)=>({
+    hour:`${String(h).padStart(2,'0')}:00`,
+    registrations: Math.round(8+Math.sin(h*0.5)*5+Math.random()*4),
+    dissolutions:  Math.round(2+Math.sin(h*0.3)*2+Math.random()*2),
+  }))
   return(
     <div className="space-y-5">
       <div><h1 className={`font-bold text-xl sm:text-2xl ${t.text}`}>Marriage Issues</h1><p className={`text-xs mt-0.5 ${t.textSub}`}>Civil marriage registry — national data</p></div>
       <GeoFilterBar onFilterChange={setActiveFilter} darkMode={darkMode} t={t}/>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">{STATS_M.map(({label,value,color})=><div key={label} className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}><p className={`text-[9px] uppercase tracking-widest font-mono ${t.textDim} mb-1`}>{label}</p><p className={`text-lg font-extrabold ${color}`}>{value}</p></div>)}</div>
-      <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
-        <h2 className={`font-bold text-sm mb-4 ${t.text}`}>Marriage Types</h2>
-        <div className="space-y-3">{KINDS.map(({label,value,pct})=><div key={label}><div className="flex justify-between mb-1"><p className={`text-xs ${t.text}`}>{label}</p><p className={`text-xs font-bold ${t.text}`}>{value}</p></div><div className={`h-2 rounded-full ${darkMode?'bg-gray-200':'bg-[#1e2d45]'}`}><div className="h-2 rounded-full bg-[#00d4ff] transition-all" style={{width:`${pct*1.2}%`,opacity:0.8}}/></div></div>)}</div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {/* Marriage Types bar chart */}
+        <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
+          <h2 className={`font-bold text-sm mb-4 ${t.text}`}>Marriage Types Distribution</h2>
+          <div className="space-y-3">{KINDS.map(({label,value,pct})=><div key={label}><div className="flex justify-between mb-1"><p className={`text-xs ${t.text}`}>{label}</p><p className={`text-xs font-bold ${t.text}`}>{value}</p></div><div className={`h-2 rounded-full ${darkMode?'bg-gray-200':'bg-[#1e2d45]'}`}><div className="h-2 rounded-full bg-[#00d4ff] transition-all" style={{width:`${pct*1.2}%`,opacity:0.8}}/></div></div>)}</div>
+        </div>
+        {/* Daily 24-hr trend */}
+        <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
+          <div className="flex items-center justify-between mb-4">
+            <div><h2 className={`font-bold text-sm ${t.text}`}>Daily Activity (24-Hour)</h2><p className={`text-[10px] ${t.textSub}`}>Registrations · Dissolutions — today</p></div>
+            <span className="flex items-center gap-1 text-[9px] text-[#00ff9d] font-mono bg-[#00ff9d]/10 border border-[#00ff9d]/20 rounded-full px-2 py-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#00ff9d] animate-pulse"/>LIVE</span>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={dailyMarriage} margin={{top:5,right:10,left:0,bottom:0}}>
+              <CartesianGrid strokeDasharray="3 3" stroke={darkMode?'#e5e7eb':'#1e2d45'} vertical={false}/>
+              <XAxis dataKey="hour" tick={{fill:darkMode?'#6b7280':'#4a6080',fontSize:8,fontFamily:'monospace'}} interval={5} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fill:darkMode?'#6b7280':'#4a6080',fontSize:9}} axisLine={false} tickLine={false} width={25}/>
+              <Tooltip contentStyle={{background:darkMode?'#fff':'#0a1628',border:'1px solid #1a3060',borderRadius:'8px',fontSize:'11px'}}/>
+              <Area type="monotone" dataKey="registrations" name="Registrations" stroke="#00ff9d" fill="#00ff9d" fillOpacity={0.15} strokeWidth={2}/>
+              <Area type="monotone" dataKey="dissolutions"  name="Dissolutions"  stroke="#ff6b9d" fill="#ff6b9d" fillOpacity={0.12} strokeWidth={1.5}/>
+            </AreaChart>
+          </ResponsiveContainer>
+          <div className="flex items-center gap-4 mt-1 justify-center">
+            {[['Registrations','#00ff9d'],['Dissolutions','#ff6b9d']].map(([n,c])=>(
+              <div key={n} className="flex items-center gap-1.5"><div className="w-3 h-1.5 rounded-full" style={{background:c}}/><span className="text-[9px] text-gray-500">{n}</span></div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -898,29 +1016,178 @@ function MarriageIssuesContent({darkMode,t}){
 // ── HEALTH TRENDS ─────────────────────────────────────────
 function HealthTrendsContent({darkMode,t}){
   const [activeFilter,setActiveFilter]=useState({scope:'national',region:'',district:'',village:''})
-  const data=[
-    {month:'Jan',births:4820,deaths:1240},{month:'Feb',births:5100,deaths:1180},
-    {month:'Mar',births:5340,deaths:1320},{month:'Apr',births:5680,deaths:1290},
-    {month:'May',births:5890,deaths:1350},{month:'Jun',births:6120,deaths:1410},
-  ]
+  // Daily 24-hr data (00:00–23:00)
+  const dailyData=Array.from({length:24},(_,h)=>({
+    hour:`${String(h).padStart(2,'0')}:00`,
+    births: Math.round(40+Math.sin(h*0.4)*25+Math.random()*15),
+    deaths: Math.round(12+Math.sin(h*0.3)*8+Math.random()*6),
+    admissions: Math.round(80+Math.sin(h*0.5)*40+Math.random()*20),
+  }))
   const STATS_H=[
-    {label:'Registered Births',value:'1,247,320',color:'text-[#00ff9d]'},{label:'Registered Deaths',value:'312,840',color:'text-red-400'},
-    {label:'Infant Mortality',value:'3.2%',color:'text-orange-400'},{label:'Life Expectancy',value:'67.4 yrs',color:'text-[#00d4ff]'},
+    {label:'Registered Births',    value:'1,247,320',  color:'text-[#00ff9d]'},
+    {label:'Registered Deaths',    value:'312,840',    color:'text-red-400'},
+    {label:'Total Facilities',     value:'8,432',      color:'text-[#00d4ff]'},
+    {label:'Hospitals',            value:'320',        color:'text-orange-400'},
+    {label:'Health Centres',       value:'1,544',      color:'text-purple-400'},
+    {label:'Dispensaries',         value:'6,568',      color:'text-yellow-400'},
+    {label:'Infant Mortality',     value:'3.2%',       color:'text-red-400'},
+    {label:'Life Expectancy',      value:'67.4 yrs',   color:'text-[#00d4ff]'},
   ]
   return(
     <div className="space-y-5">
       <div><h1 className={`font-bold text-xl sm:text-2xl ${t.text}`}>Health Trends</h1><p className={`text-xs mt-0.5 ${t.textSub}`}>National health indicators — civil registry data</p></div>
       <GeoFilterBar onFilterChange={setActiveFilter} darkMode={darkMode} t={t}/>
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">{STATS_H.map(({label,value,color})=><div key={label} className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}><p className={`text-[9px] uppercase tracking-widest font-mono ${t.textDim} mb-1`}>{label}</p><p className={`text-lg font-extrabold ${color}`}>{value}</p></div>)}</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{STATS_H.map(({label,value,color})=><div key={label} className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}><p className={`text-[9px] uppercase tracking-widest font-mono ${t.textDim} mb-1`}>{label}</p><p className={`text-lg font-extrabold ${color}`}>{value}</p></div>)}</div>
+      {/* Daily 24-hr trend */}
       <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
-        <h2 className={`font-bold text-sm mb-4 ${t.text}`}>Monthly Births vs Deaths</h2>
-        <ResponsiveContainer width="100%" height={250}>
-          <AreaChart data={data}><CartesianGrid strokeDasharray="3 3" stroke={darkMode?'#e5e7eb':'#1e2d45'} vertical={false}/><XAxis dataKey="month" tick={{fill:darkMode?'#6b7280':'#4a6080',fontSize:10}}/><YAxis tick={{fill:darkMode?'#6b7280':'#4a6080',fontSize:10}}/><Tooltip/>
-            <Area type="monotone" dataKey="births" name="Births" stroke="#00ff9d" fill="#00ff9d" fillOpacity={0.15}/>
-            <Area type="monotone" dataKey="deaths" name="Deaths" stroke="#ff6b9d" fill="#ff6b9d" fillOpacity={0.15}/>
+        <div className="flex items-center justify-between mb-4">
+          <div><h2 className={`font-bold text-sm ${t.text}`}>Daily Health Activity (24-Hour)</h2><p className={`text-[10px] ${t.textSub}`}>Births · Deaths · Admissions — today</p></div>
+          <span className="flex items-center gap-1 text-[9px] text-[#00ff9d] font-mono bg-[#00ff9d]/10 border border-[#00ff9d]/20 rounded-full px-2 py-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#00ff9d] animate-pulse"/>LIVE</span>
+        </div>
+        <ResponsiveContainer width="100%" height={280}>
+          <AreaChart data={dailyData} margin={{top:5,right:10,left:0,bottom:0}}>
+            <CartesianGrid strokeDasharray="3 3" stroke={darkMode?'#e5e7eb':'#1e2d45'} vertical={false}/>
+            <XAxis dataKey="hour" tick={{fill:darkMode?'#6b7280':'#4a6080',fontSize:8,fontFamily:'monospace'}} interval={3} axisLine={false} tickLine={false}/>
+            <YAxis tick={{fill:darkMode?'#6b7280':'#4a6080',fontSize:9}} axisLine={false} tickLine={false}/>
+            <Tooltip contentStyle={{background:darkMode?'#fff':'#0a1628',border:'1px solid #1a3060',borderRadius:'8px',fontSize:'11px'}}/>
+            <Area type="monotone" dataKey="admissions" name="Admissions" stroke="#00d4ff" fill="#00d4ff" fillOpacity={0.1} strokeWidth={1.5}/>
+            <Area type="monotone" dataKey="births" name="Births" stroke="#00ff9d" fill="#00ff9d" fillOpacity={0.15} strokeWidth={2}/>
+            <Area type="monotone" dataKey="deaths" name="Deaths" stroke="#ff6b9d" fill="#ff6b9d" fillOpacity={0.12} strokeWidth={1.5}/>
           </AreaChart>
         </ResponsiveContainer>
+        <div className="flex items-center gap-4 mt-2 justify-center">
+          {[['Admissions','#00d4ff'],['Births','#00ff9d'],['Deaths','#ff6b9d']].map(([n,c])=>(
+            <div key={n} className="flex items-center gap-1.5"><div className="w-3 h-1.5 rounded-full" style={{background:c}}/><span className="text-[9px] text-gray-500">{n}</span></div>
+          ))}
+        </div>
       </div>
+    </div>
+  )
+}
+
+
+// ── GLOBAL SEARCH ─────────────────────────────────────────
+const SEARCH_INDEX = [
+  // Nav sections
+  {type:'nav',  label:'Dashboard',              desc:'System overview & stats',               nav:'Dashboard'},
+  {type:'nav',  label:'Demographics View',       desc:'Population, age, gender filters',       nav:'Demographics View'},
+  {type:'nav',  label:'Infrastructure View',     desc:'Roads, schools, hospitals, housing',    nav:'Infrastructure View'},
+  {type:'nav',  label:'District Admins',         desc:'Manage district-level administrators',  nav:'District Admins'},
+  {type:'nav',  label:'Village Officers',        desc:'Village-level census officers',         nav:'Village Officers'},
+  {type:'nav',  label:'Health Officers',         desc:'Hospital & clinic officers',            nav:'Health Officers'},
+  {type:'nav',  label:'Manage Users',            desc:'All system users, suspend/delete',      nav:'Manage Users'},
+  {type:'nav',  label:'System Performance',      desc:'Server metrics, CPU, RAM, services',    nav:'System Performance'},
+  {type:'nav',  label:'System Log Reports',      desc:'Audit trail & log entries',             nav:'System Log Reports'},
+  {type:'nav',  label:'Security Alerts',         desc:'Blocked IPs, suspicious activity',      nav:'Security Alerts'},
+  {type:'nav',  label:'Migration Trends',        desc:'Internal & external migrations',        nav:'Migration Trends'},
+  {type:'nav',  label:'Marriage Issues',         desc:'Registrations, divorces, disputes',     nav:'Marriage Issues'},
+  {type:'nav',  label:'Health Trends',           desc:'Births, deaths, daily health data',     nav:'Health Trends'},
+  // Quick actions
+  {type:'action',label:'Register New Admin',    desc:'Open registration modal',               nav:'District Admins',  action:'newreg'},
+  {type:'action',label:'Change Password',       desc:'Update your account password',          nav:null,               action:'changepwd'},
+  {type:'action',label:'MFA Settings',          desc:'Enable or disable MFA',                nav:null,               action:'mfa'},
+  {type:'action',label:'Export Report',         desc:'Download system report',               nav:'Dashboard'},
+  // Data cards
+  {type:'data',  label:'Total Population',      desc:'63,748,291 — National census total',   nav:'Demographics View'},
+  {type:'data',  label:'Employment Status',     desc:'Gov 18.4% · Self 47.2% · Other 34.4%',nav:'Demographics View'},
+  {type:'data',  label:'Health Facilities',     desc:'8,432 facilities nationwide',           nav:'Health Trends'},
+  {type:'data',  label:'Registered Marriages',  desc:'12,340,210 registered couples',         nav:'Marriage Issues'},
+  {type:'data',  label:'Migration Records',     desc:'4,891 active migration records',        nav:'Migration Trends'},
+  {type:'data',  label:'Security Alerts',       desc:'2 unresolved active alerts',            nav:'Security Alerts'},
+]
+
+const TYPE_STYLE = {
+  nav:    {label:'SECTION', color:'text-[#00d4ff]', bg:'bg-[#00d4ff]/10'},
+  action: {label:'ACTION',  color:'text-[#00ff9d]', bg:'bg-[#00ff9d]/10'},
+  data:   {label:'DATA',    color:'text-purple-400', bg:'bg-purple-400/10'},
+}
+
+function GlobalSearch({t, darkMode, onNavigate}) {
+  const [query,   setQuery]   = useState('')
+  const [focused, setFocused] = useState(false)
+  const [selIdx,  setSelIdx]  = useState(0)
+  const ref = useRef(null)
+
+  const results = query.length >= 1
+    ? SEARCH_INDEX.filter(item =>
+        item.label.toLowerCase().includes(query.toLowerCase()) ||
+        item.desc.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, 8)
+    : []
+
+  const handleSelect = (item) => {
+    if (item.nav) onNavigate(item.nav)
+    setQuery(''); setFocused(false)
+  }
+
+  const handleKey = (e) => {
+    if (!results.length) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSelIdx(i => Math.min(i+1, results.length-1)) }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setSelIdx(i => Math.max(i-1, 0)) }
+    if (e.key === 'Enter')     { handleSelect(results[selIdx]) }
+    if (e.key === 'Escape')    { setFocused(false); setQuery('') }
+  }
+
+  useEffect(() => { setSelIdx(0) }, [query])
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setFocused(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} className="flex-1 max-w-sm ml-2 relative hidden md:block">
+      <Search size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 ${t.textDim} z-10`}/>
+      <input
+        type="text"
+        value={query}
+        placeholder="Search sections, data, actions..."
+        onChange={e => { setQuery(e.target.value); setFocused(true) }}
+        onFocus={() => setFocused(true)}
+        onKeyDown={handleKey}
+        className={`w-full ${t.input} border ${focused ? (darkMode?'border-blue-400':'border-[#00d4ff]/50') : t.cardBorder} ${t.text} text-sm rounded-lg pl-8 pr-4 py-2 outline-none transition-colors placeholder-gray-500`}
+      />
+      {focused && results.length > 0 && (
+        <div className={`absolute top-full mt-1 left-0 right-0 z-50 rounded-xl border shadow-2xl overflow-hidden
+                        ${darkMode ? 'bg-white border-gray-200' : 'bg-[#0d1526] border-[#1a2d4a]'}`}>
+          {results.map((item, i) => {
+            const ts = TYPE_STYLE[item.type]
+            return (
+              <button
+                key={i}
+                onClick={() => handleSelect(item)}
+                className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-all
+                           ${i === selIdx
+                             ? darkMode ? 'bg-blue-50' : 'bg-[#1a2d4a]'
+                             : darkMode ? 'hover:bg-gray-50' : 'hover:bg-white/5'}`}
+              >
+                <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 ${ts.color} ${ts.bg}`}>
+                  {ts.label}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-semibold truncate ${darkMode ? 'text-gray-800' : 'text-white'}`}>{item.label}</p>
+                  <p className={`text-[10px] truncate ${t.textDim}`}>{item.desc}</p>
+                </div>
+                {item.nav && (
+                  <ChevronRight size={10} className={`shrink-0 ${t.textDim}`}/>
+                )}
+              </button>
+            )
+          })}
+          <div className={`px-4 py-1.5 border-t ${t.border} flex items-center gap-3`}>
+            <span className={`text-[9px] font-mono ${t.textDim}`}>↑↓ navigate</span>
+            <span className={`text-[9px] font-mono ${t.textDim}`}>↵ select</span>
+            <span className={`text-[9px] font-mono ${t.textDim}`}>esc close</span>
+          </div>
+        </div>
+      )}
+      {focused && query.length >= 1 && results.length === 0 && (
+        <div className={`absolute top-full mt-1 left-0 right-0 z-50 rounded-xl border shadow-2xl px-4 py-3
+                        ${darkMode ? 'bg-white border-gray-200' : 'bg-[#0d1526] border-[#1a2d4a]'}`}>
+          <p className={`text-xs ${t.textDim}`}>No results for "<span className={t.text}>{query}</span>"</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -932,7 +1199,11 @@ export default function SuperAdminDashboard({onSectionChange,onLogout}){
   const [darkMode,    setDarkMode]    =useState(false)
   const [settingsOpen,setSettingsOpen]=useState(false)
   const [showChangePwd,setShowChangePwd]=useState(false)
+  const [mfaEnabled,  setMfaEnabled]  =useState(true)
+  const [showMfaSetup,setShowMfaSetup]=useState(false)
   const [showNewReg,  setShowNewReg]  =useState(false)
+  const [mfaEnabled,  setMfaEnabled]  =useState(true)
+  const [showMfaSetup,setShowMfaSetup]=useState(false)
   const settingsRef=useRef(null)
 
   const setNav=(label)=>{setActiveNav(label);onSectionChange?.(label);setSidebarOpen(false)}
@@ -986,6 +1257,81 @@ export default function SuperAdminDashboard({onSectionChange,onLogout}){
     <div className={`flex h-full overflow-hidden ${t.bg} ${t.text}`}>
       {showChangePwd&&<ChangePasswordModal onClose={()=>setShowChangePwd(false)} darkMode={darkMode} t={t}/>}
       {showNewReg&&<NewRegistrationModal onClose={()=>setShowNewReg(false)} darkMode={darkMode} t={t}/>}
+      {showMfaSetup&&(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={()=>setShowMfaSetup(false)}/>
+          <div className={`relative w-full max-w-sm rounded-2xl border shadow-2xl z-10 p-6 ${t.card} ${t.cardBorder}`}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#00ff9d]/10 border border-[#00ff9d]/20 flex items-center justify-center">
+                  <Shield size={15} className="text-[#00ff9d]"/>
+                </div>
+                <div>
+                  <p className={`font-bold text-sm ${t.text}`}>MFA Authentication</p>
+                  <p className={`text-[10px] ${t.textSub}`}>{mfaEnabled?'Currently ENABLED — Google Authenticator active':'Currently DISABLED'}</p>
+                </div>
+              </div>
+              <button onClick={()=>setShowMfaSetup(false)} className={`w-7 h-7 rounded-lg flex items-center justify-center ${t.textDim} hover:text-red-400 hover:bg-red-500/10 transition-all`}>
+                <X size={15}/>
+              </button>
+            </div>
+            <div className="space-y-3 mb-5">
+              {[
+                {val:true, icon:'🔐',title:'Enable MFA',   desc:'Require Google Authenticator code on every login (recommended)',col:'text-[#00ff9d]',  brd:'border-[#00ff9d]/40',  bg:'bg-[#00ff9d]/10'},
+                {val:false,icon:'⚡', title:'Disable MFA', desc:'Login with email & password only — less secure',               col:'text-orange-400', brd:'border-orange-400/40', bg:'bg-orange-400/10'},
+              ].map(({val,icon,title,desc,col,brd,bg})=>(
+                <button key={String(val)} onClick={()=>setMfaEnabled(val)}
+                        className={`w-full text-left p-3 rounded-xl border transition-all ${mfaEnabled===val?`${bg} ${brd}`:`${t.cardBorder} hover:border-[#2a4060]`}`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{icon}</span>
+                    <div className="flex-1">
+                      <p className={`text-sm font-bold ${col}`}>{title}</p>
+                      <p className="text-[10px] text-gray-500">{desc}</p>
+                    </div>
+                    {mfaEnabled===val&&<CheckCircle size={14} className={col}/>}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button onClick={()=>setShowMfaSetup(false)}
+                    className="w-full py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-[#00d4ff] to-[#0088bb] text-[#060f1e] hover:opacity-90 transition-all">
+              Save & Close
+            </button>
+          </div>
+        </div>
+      )}
+      {showMfaSetup&&(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={()=>setShowMfaSetup(false)}/>
+          <div className={`relative w-full max-w-sm rounded-2xl border shadow-2xl z-10 p-6 ${t.card} ${t.cardBorder}`}>
+            <div className={`flex items-center justify-between mb-4`}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#00ff9d]/10 border border-[#00ff9d]/20 flex items-center justify-center"><Shield size={15} className="text-[#00ff9d]"/></div>
+                <div><p className={`font-bold text-sm ${t.text}`}>MFA Authentication</p><p className={`text-[10px] ${t.textSub}`}>{mfaEnabled?'Currently ENABLED':'Currently DISABLED'}</p></div>
+              </div>
+              <button onClick={()=>setShowMfaSetup(false)} className={`w-7 h-7 rounded-lg flex items-center justify-center ${t.textDim} hover:text-red-400 hover:bg-red-500/10`}><X size={15}/></button>
+            </div>
+            <div className="space-y-3 mb-5">
+              {[
+                {val:true, icon:'🔐',title:'Enable MFA',desc:'Require Google Authenticator code on every login',col:'text-[#00ff9d]',brd:'border-[#00ff9d]/40',bg:'bg-[#00ff9d]/10'},
+                {val:false,icon:'⚡',title:'Disable MFA',desc:'Login with email & password only (less secure)',col:'text-orange-400',brd:'border-orange-400/40',bg:'bg-orange-400/10'},
+              ].map(({val,icon,title,desc,col,brd,bg})=>(
+                <button key={String(val)} onClick={()=>setMfaEnabled(val)}
+                        className={`w-full text-left p-3 rounded-xl border transition-all ${mfaEnabled===val?`${bg} ${brd}`:`${t.cardBorder} hover:border-[#2a4060]`}`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{icon}</span>
+                    <div className="flex-1"><p className={`text-sm font-bold ${col}`}>{title}</p><p className="text-[10px] text-gray-500">{desc}</p></div>
+                    {mfaEnabled===val&&<CheckCircle size={14} className={col}/>}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button onClick={()=>setShowMfaSetup(false)} className="w-full py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-[#00d4ff] to-[#0088bb] text-[#060f1e] hover:opacity-90 transition-all">
+              Save & Close
+            </button>
+          </div>
+        </div>
+      )}
       {sidebarOpen&&<div className="fixed inset-0 bg-black/60 z-20 lg:hidden" onClick={()=>setSidebarOpen(false)}/>}
 
       {/* SIDEBAR */}
@@ -1021,10 +1367,7 @@ export default function SuperAdminDashboard({onSectionChange,onLogout}){
         <header className={`h-14 ${t.topbar} border-b ${t.border} flex items-center gap-3 px-4 shrink-0`}>
           <button onClick={()=>setSidebarOpen(true)} className={`lg:hidden ${t.textDim} hover:text-blue-500`}><Menu size={18}/></button>
           <p className={`hidden sm:block font-bold text-sm tracking-wide ${t.text}`}>NBS CENSUS SYSTEM</p>
-          <div className="flex-1 max-w-sm ml-2 relative hidden md:block">
-            <Search size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 ${t.textDim}`}/>
-            <input type="text" placeholder="Global system search..." className={`w-full ${t.input} border ${t.cardBorder} ${t.text} text-sm rounded-lg pl-8 pr-4 py-2 outline-none focus:border-[#00d4ff]/40 placeholder-gray-500`}/>
-          </div>
+          <GlobalSearch t={t} darkMode={darkMode} onNavigate={setNav}/>
           <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono text-[#00ff9d] bg-[#00ff9d]/10 border border-[#00ff9d]/20 rounded-full px-2.5 py-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00ff9d] animate-pulse"/>SYSTEM SECURE
           </div>
@@ -1039,10 +1382,23 @@ export default function SuperAdminDashboard({onSectionChange,onLogout}){
             <div className="relative" ref={settingsRef}>
               <button onClick={()=>setSettingsOpen(!settingsOpen)} className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${t.iconBtn} ${settingsOpen?'border-[#00d4ff]/40 text-[#00d4ff]':''}`}><Settings size={14}/></button>
               {settingsOpen&&(
-                <div className={`absolute right-0 top-10 w-48 ${t.dropdown} border rounded-xl shadow-2xl z-50 overflow-hidden`}>
+                <div className={`absolute right-0 top-10 w-52 ${t.dropdown} border rounded-xl shadow-2xl z-50 overflow-hidden`}>
                   <div className="pt-2 pb-2">
                     <p className={`px-4 py-1.5 text-[9px] font-mono tracking-widest ${t.textSub} uppercase`}>Account</p>
-                    <button onClick={()=>{setSettingsOpen(false);setShowChangePwd(true)}} className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs transition-all ${t.dropItem}`}><KeyRound size={13} className="text-[#00d4ff] shrink-0"/>Change Password</button>
+                    <button onClick={()=>{setSettingsOpen(false);setShowChangePwd(true)}} className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs transition-all ${t.dropItem}`}>
+                      <KeyRound size={13} className="text-[#00d4ff] shrink-0"/>Change Password
+                    </button>
+                    <div className={`my-1 border-t ${t.border}`}/>
+                    <p className={`px-4 py-1.5 text-[9px] font-mono tracking-widest ${t.textSub} uppercase`}>Security</p>
+                    <button onClick={()=>{setSettingsOpen(false);setShowMfaSetup(true)}} className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-xs transition-all ${t.dropItem}`}>
+                      <span className="flex items-center gap-2">
+                        <Shield size={13} className={mfaEnabled?'text-[#00ff9d]':'text-gray-500'}/>
+                        MFA Authentication
+                      </span>
+                      <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full border ${mfaEnabled?'text-[#00ff9d] bg-[#00ff9d]/10 border-[#00ff9d]/20':'text-gray-500 border-gray-600'}`}>
+                        {mfaEnabled?'ON':'OFF'}
+                      </span>
+                    </button>
                     <div className={`my-1 border-t ${t.border}`}/>
                     <button onClick={()=>{setSettingsOpen(false);onLogout?.()}} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/10 transition-all">
                       <LogOutLucide size={13} className="shrink-0"/>Logout
