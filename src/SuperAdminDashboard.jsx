@@ -1199,8 +1199,6 @@ export default function SuperAdminDashboard({onSectionChange,onLogout}){
   const [darkMode,    setDarkMode]    =useState(false)
   const [settingsOpen,setSettingsOpen]=useState(false)
   const [showChangePwd,setShowChangePwd]=useState(false)
-  const [mfaEnabled,  setMfaEnabled]  =useState(true)
-  const [showMfaSetup,setShowMfaSetup]=useState(false)
   const [showNewReg,  setShowNewReg]  =useState(false)
   const [mfaEnabled,  setMfaEnabled]  =useState(true)
   const [showMfaSetup,setShowMfaSetup]=useState(false)
