@@ -128,25 +128,46 @@ function GeoFilterBar({onFilterChange,darkMode,t,showScopeCards=true}){
   const [scope,setScope]=useState('national')
   const [region,setRegion]=useState('')
   const [district,setDistrict]=useState('')
+  const [ward,setWard]=useState('')
   const [village,setVillage]=useState('')
   const [rSearch,setRSearch]=useState('')
   const [dSearch,setDSearch]=useState('')
+  const [wSearch,setWSearch]=useState('')
   const [vSearch,setVSearch]=useState('')
   const [showRDD,setShowRDD]=useState(false)
   const [showDDD,setShowDDD]=useState(false)
+  const [showWDD,setShowWDD]=useState(false)
   const [showVDD,setShowVDD]=useState(false)
 
+  // wards = current "villages" in TZ_GEO (Region→District→Wards)
   const scopeRegions=ALL_REGIONS.filter(r=>scope==='national'?true:r.jurisdiction===scope)
   const filteredR=scopeRegions.filter(r=>r.name.toLowerCase().includes(rSearch.toLowerCase())||r.code.toLowerCase().includes(rSearch.toLowerCase()))
   const availD=getDistricts(region)
   const filteredD=availD.filter(d=>d.toLowerCase().includes(dSearch.toLowerCase()))
-  const availV=getVillages(region,district)
+  // Wards come from the 3rd level of TZ_GEO (previously called villages)
+  const availW=getVillages(region,district)
+  const filteredW=availW.filter(w=>w.toLowerCase().includes(wSearch.toLowerCase()))
+  // Sub-villages per ward (sample data for key wards; others return empty)
+  const WARD_VILLAGES={
+    "Ilala":["Buguruni Kisiwani","Buguruni Mnyamani","Gerezani Mashariki","Kariakoo Kati","Mnazi Mmoja"],
+    "Kinondoni":["Makumbusho Juu","Makumbusho Kati","Msasani Pwani","Mbezi Juu","Sinza Saba"],
+    "Temeke":["Keko Magurumbasi","Keko Mwanga","Miburani Kaskazini","Chamazi Kati","Mbagala Kuu"],
+    "Ubungo":["Mbezi Louis Mashariki","Goba Kaskazini","Kimara Mwisho","Saranga Juu","Ununio Kati"],
+    "Dodoma City":["Nzuguni Kati","Makulu Kaskazini","Ipagala Juu","Kikuyu Mashariki","Chamwino Kati"],
+    "Ilemela":["Buswelu Kati","Kirumba Pwani","Nyamanoro Kaskazini","Mkolani Mashariki","Sangabuye Kati"],
+    "Nyamagana":["Bwiru Kaskazini","Isamilo Kati","Mahina Mashariki","Mirongo Kati","Nyegezi Juu"],
+    "Moshi Urban":["Bondeni Kati","Karanga Juu","Rau Kaskazini","Mji Mwema Mashariki","Kiboriloni Kati"],
+    "Arusha City":["Elerai Kati","Levolosi Kaskazini","Ngarenaro Mashariki","Sekei Juu","Themi Kati"],
+    "Tanga City":["Chumbageni Kati","Duga Mashariki","Ngamiani Juu","Makorora Kaskazini","Mkwajuni Kati"],
+  }
+  const availV=(WARD_VILLAGES[ward]||[])
   const filteredV=availV.filter(v=>v.toLowerCase().includes(vSearch.toLowerCase()))
 
-  const handleScope=(s)=>{setScope(s);setRegion('');setDistrict('');setVillage('');setRSearch('');setDSearch('');setVSearch('');onFilterChange?.({scope:s,region:'',district:'',village:''})}
-  const selRegion=(r)=>{setRegion(r.name);setRSearch(r.name);setDistrict('');setVillage('');setDSearch('');setVSearch('');setShowRDD(false);onFilterChange?.({scope,region:r.name,district:'',village:''})}
-  const selDistrict=(d)=>{setDistrict(d);setDSearch(d);setVillage('');setVSearch('');setShowDDD(false);onFilterChange?.({scope,region,district:d,village:''})}
-  const selVillage=(v)=>{setVillage(v);setVSearch(v);setShowVDD(false);onFilterChange?.({scope,region,district,village:v})}
+  const handleScope=(s)=>{setScope(s);setRegion('');setDistrict('');setWard('');setVillage('');setRSearch('');setDSearch('');setWSearch('');setVSearch('');onFilterChange?.({scope:s,region:'',district:'',ward:'',village:''})}
+  const selRegion=(r)=>{setRegion(r.name);setRSearch(r.name);setDistrict('');setWard('');setVillage('');setDSearch('');setWSearch('');setVSearch('');setShowRDD(false);onFilterChange?.({scope,region:r.name,district:'',ward:'',village:''})}
+  const selDistrict=(d)=>{setDistrict(d);setDSearch(d);setWard('');setVillage('');setWSearch('');setVSearch('');setShowDDD(false);onFilterChange?.({scope,region,district:d,ward:'',village:''})}
+  const selWard=(w)=>{setWard(w);setWSearch(w);setVillage('');setVSearch('');setShowWDD(false);onFilterChange?.({scope,region,district,ward:w,village:''})}
+  const selVillage=(v)=>{setVillage(v);setVSearch(v);setShowVDD(false);onFilterChange?.({scope,region,district,ward,village:v})}
   const clear=()=>handleScope(scope)
 
   const SCOPES=[
@@ -170,14 +191,15 @@ function GeoFilterBar({onFilterChange,darkMode,t,showScopeCards=true}){
           ))}
         </div>
       )}
-      <div className="grid grid-cols-3 gap-3">
+      {/* 4-column filter: Region District Ward Village */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Region */}
         <div className="relative">
           <p className={`text-[9px] uppercase tracking-widest mb-1 ${t.textDim}`}>{region?`Region: ${region}`:'Filter by Region'}</p>
           <input value={rSearch} onChange={e=>{setRSearch(e.target.value);setShowRDD(true)}} onFocus={()=>setShowRDD(true)} placeholder="Search region..." className={iBase}/>
           {showRDD&&rSearch&&(
             <div className={`absolute top-full mt-1 left-0 right-0 z-30 rounded-lg border shadow-xl max-h-44 overflow-y-auto ${t.card} ${t.cardBorder}`}>
-              {filteredR.length===0?<p className={`px-3 py-2 text-xs ${t.textDim}`}>No regions found</p>
+              {filteredR.length===0?<p className={`px-3 py-2 text-xs ${t.textDim}`}>No regions</p>
                :filteredR.map(r=><button key={r.code} onClick={()=>selRegion(r)} className={`w-full text-left px-3 py-2 text-xs ${t.text} hover:bg-[#1a3060] hover:text-white`}>{r.name}<span className={`ml-2 text-[9px] ${t.textDim}`}>{r.pop}</span></button>)}
             </div>
           )}
@@ -188,35 +210,48 @@ function GeoFilterBar({onFilterChange,darkMode,t,showScopeCards=true}){
           <input value={dSearch} onChange={e=>{setDSearch(e.target.value);setShowDDD(true)}} onFocus={()=>setShowDDD(true)} disabled={!region} placeholder={region?'Search district...':'Select region first'} className={`${iBase} disabled:opacity-40`}/>
           {showDDD&&dSearch&&region&&(
             <div className={`absolute top-full mt-1 left-0 right-0 z-30 rounded-lg border shadow-xl max-h-44 overflow-y-auto ${t.card} ${t.cardBorder}`}>
-              {filteredD.length===0?<p className={`px-3 py-2 text-xs ${t.textDim}`}>No districts found</p>
+              {filteredD.length===0?<p className={`px-3 py-2 text-xs ${t.textDim}`}>No districts</p>
                :filteredD.map(d=><button key={d} onClick={()=>selDistrict(d)} className={`w-full text-left px-3 py-2 text-xs ${t.text} hover:bg-[#1a3060] hover:text-white`}>{d}</button>)}
+            </div>
+          )}
+        </div>
+        {/* Ward */}
+        <div className="relative">
+          <p className={`text-[9px] uppercase tracking-widest mb-1 ${t.textDim}`}>{ward?`Ward: ${ward}`:'Filter by Ward'}</p>
+          <input value={wSearch} onChange={e=>{setWSearch(e.target.value);setShowWDD(true)}} onFocus={()=>setShowWDD(true)} disabled={!district} placeholder={district?'Search ward...':'Select district first'} className={`${iBase} disabled:opacity-40`}/>
+          {showWDD&&wSearch&&district&&(
+            <div className={`absolute top-full mt-1 left-0 right-0 z-30 rounded-lg border shadow-xl max-h-44 overflow-y-auto ${t.card} ${t.cardBorder}`}>
+              {filteredW.length===0?<p className={`px-3 py-2 text-xs ${t.textDim}`}>No wards</p>
+               :filteredW.map(w=><button key={w} onClick={()=>selWard(w)} className={`w-full text-left px-3 py-2 text-xs ${t.text} hover:bg-[#1a3060] hover:text-white`}>{w}</button>)}
             </div>
           )}
         </div>
         {/* Village */}
         <div className="relative">
           <p className={`text-[9px] uppercase tracking-widest mb-1 ${t.textDim}`}>{village?`Village: ${village}`:'Filter by Village'}</p>
-          <input value={vSearch} onChange={e=>{setVSearch(e.target.value);setShowVDD(true)}} onFocus={()=>setShowVDD(true)} disabled={!district} placeholder={district?'Search village...':'Select district first'} className={`${iBase} disabled:opacity-40`}/>
-          {showVDD&&vSearch&&district&&(
+          <input value={vSearch} onChange={e=>{setVSearch(e.target.value);setShowVDD(true)}} onFocus={()=>setShowVDD(true)} disabled={!ward} placeholder={ward?'Search village...':'Select ward first'} className={`${iBase} disabled:opacity-40`}/>
+          {showVDD&&vSearch&&ward&&(
             <div className={`absolute top-full mt-1 left-0 right-0 z-30 rounded-lg border shadow-xl max-h-44 overflow-y-auto ${t.card} ${t.cardBorder}`}>
-              {filteredV.length===0?<p className={`px-3 py-2 text-xs ${t.textDim}`}>No villages found</p>
+              {filteredV.length===0?<p className={`px-3 py-2 text-xs ${t.textDim}`}>No villages for this ward</p>
                :filteredV.map(v=><button key={v} onClick={()=>selVillage(v)} className={`w-full text-left px-3 py-2 text-xs ${t.text} hover:bg-[#1a3060] hover:text-white`}>{v}</button>)}
             </div>
           )}
         </div>
       </div>
-      {(region||district||village)&&(
+      {(region||district||ward||village)&&(
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-[9px] ${t.textDim}`}>Showing:</span>
           {region&&<span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#00d4ff]/10 text-[#00d4ff] border border-[#00d4ff]/20">{region}</span>}
           {district&&<><span className={`text-[9px] ${t.textDim}`}>›</span><span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/20">{district}</span></>}
-          {village&&<><span className={`text-[9px] ${t.textDim}`}>›</span><span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-orange-400/10 text-orange-400 border border-orange-400/20">{village}</span></>}
+          {ward&&<><span className={`text-[9px] ${t.textDim}`}>›</span><span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-orange-400/10 text-orange-400 border border-orange-400/20">{ward}</span></>}
+          {village&&<><span className={`text-[9px] ${t.textDim}`}>›</span><span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-purple-400/10 text-purple-400 border border-purple-400/20">{village}</span></>}
           <button onClick={clear} className="text-[9px] text-red-400 hover:underline ml-1">Clear ×</button>
         </div>
       )}
     </div>
   )
 }
+
 
 // ── WARNING POPUP (reusable) ──────────────────────────────
 function WarningPopup({type,user,onConfirm,onCancel,t}){
@@ -343,20 +378,201 @@ function DashboardContent({darkMode,t,onNewReg}){
 // ── DEMOGRAPHICS CONTENT ─────────────────────────────────
 function DemographicsContent({darkMode,t}){
   const [pFilter,setPFilter]=useState('national')
-  const [activeFilter,setActiveFilter]=useState({scope:'national',region:'',district:'',village:''})
+  const [activeFilter,setActiveFilter]=useState({scope:'national',region:'',district:'',ward:'',village:''})
   const meta=filterMeta[pFilter]
   const rawData=pyramidData[pFilter]
   const chartData=rawData.map(d=>({age:d.age,male:-d.male,female:d.female}))
-  const scopeLabel=activeFilter.village||activeFilter.district||activeFilter.region||activeFilter.scope
+  const scopeLabel=activeFilter.village||activeFilter.ward||activeFilter.district||activeFilter.region||activeFilter.scope
 
-  // Cards update based on filter scope
+  // Scope multipliers for card values
   const scopeMult={national:1,mainland:0.915,zanzibar:0.085}
   const m=scopeMult[activeFilter.scope]||1
-  const DCARDS=[
-    {label:'Total Population',  value:Math.round(63748291*m).toLocaleString(), sub:'Status: Alive only',    color:'text-[#00ff9d]',bg:'bg-[#00ff9d]/10 border-[#00ff9d]/20'},
-    {label:'Male Population',   value:Math.round(31364159*m).toLocaleString(), sub:'49.2% of total',        color:'text-[#00d4ff]',bg:'bg-[#00d4ff]/10 border-[#00d4ff]/20'},
-    {label:'Female Population', value:Math.round(32384132*m).toLocaleString(), sub:'50.8% of total',        color:'text-[#ff6b9d]',bg:'bg-[#ff6b9d]/10 border-[#ff6b9d]/20'},
+
+  // ── REAL NBS 2022 REGION DATA ──────────────────────────
+  const REGION_POP_DATA=[
+    {region:'Dar es Salaam', pop:5383728, male:2600018, female:2783710, sexRatio:93, hh:1550066, hhSize:3.5, density:3865, popShare:8.7},
+    {region:'Mwanza',        pop:3708027, male:1820880, female:1887147, sexRatio:96, hh:755234,  hhSize:4.9, density:391,  popShare:6.0},
+    {region:'Tabora',        pop:3394626, male:1678110, female:1716516, sexRatio:98, hh:599316,  hhSize:5.7, density:45,   popShare:5.5},
+    {region:'Morogoro',      pop:3234885, male:1591278, female:1643607, sexRatio:97, hh:829456,  hhSize:3.9, density:45,   popShare:5.2},
+    {region:'Dodoma',        pop:3085625, male:1512760, female:1572865, sexRatio:96, hh:757821,  hhSize:4.1, density:75,   popShare:5.0},
+    {region:'Kagera',        pop:2986302, male:1471024, female:1515278, sexRatio:97, hh:694490,  hhSize:4.3, density:118,  popShare:4.8},
+    {region:'Geita',         pop:2974523, male:1486120, female:1488403, sexRatio:100,hh:561232,  hhSize:5.3, density:148,  popShare:4.8},
+    {region:'Tanga',         pop:2586090, male:1261600, female:1324490, sexRatio:95, hh:630270,  hhSize:4.1, density:98,   popShare:4.2},
+    {region:'Kigoma',        pop:2458023, male:1214440, female:1243583, sexRatio:98, hh:472696,  hhSize:5.2, density:67,   popShare:4.0},
+    {region:'Mara',          pop:2341934, male:1144350, female:1197584, sexRatio:96, hh:468387,  hhSize:5.0, density:109,  popShare:3.8},
+    {region:'Arusha',        pop:2338234, male:1148140, female:1190094, sexRatio:96, hh:616378,  hhSize:3.8, density:63,   popShare:3.8},
+    {region:'Mbeya',         pop:2346254, male:1145870, female:1200384, sexRatio:95, hh:634121,  hhSize:3.7, density:62,   popShare:3.8},
+    {region:'Manyara',       pop:1892520, male:933450,  female:959070,  sexRatio:97, hh:402132,  hhSize:4.7, density:43,   popShare:3.1},
+    {region:'Kilimanjaro',   pop:1861934, male:905600,  female:956334,  sexRatio:95, hh:503225,  hhSize:3.7, density:141,  popShare:3.0},
+    {region:'Shinyanga',     pop:2213745, male:1090240, female:1123505, sexRatio:97, hh:418632,  hhSize:5.3, density:119,  popShare:3.6},
+    {region:'Simiyu',        pop:2141821, male:1056800, female:1085021, sexRatio:97, hh:319077,  hhSize:6.7, density:85,   popShare:3.5},
+    {region:'Singida',       pop:2006990, male:985700,  female:1021290, sexRatio:97, hh:393527,  hhSize:5.1, density:41,   popShare:3.3},
+    {region:'Pwani',         pop:2021097, male:994700,  female:1026397, sexRatio:97, hh:546512,  hhSize:3.7, density:62,   popShare:3.3},
+    {region:'Iringa',        pop:1162184, male:566040,  female:596144,  sexRatio:95, hh:314374,  hhSize:3.7, density:34,   popShare:1.9},
+    {region:'Ruvuma',        pop:1844453, male:903680,  female:940773,  sexRatio:96, hh:461113,  hhSize:4.0, density:29,   popShare:3.0},
+    {region:'Lindi',         pop:1166675, male:567200,  female:599475,  sexRatio:95, hh:343140,  hhSize:3.4, density:18,   popShare:1.9},
+    {region:'Mtwara',        pop:1594553, male:775580,  female:818973,  sexRatio:95, hh:483501,  hhSize:3.3, density:98,   popShare:2.6},
+    {region:'Katavi',        pop:1169319, male:581440,  female:587879,  sexRatio:99, hh:220626,  hhSize:5.3, density:25,   popShare:1.9},
+    {region:'Njombe',        pop:859607,  male:417400,  female:442207,  sexRatio:94, hh:238780,  hhSize:3.6, density:42,   popShare:1.4},
+    {region:'Rukwa',         pop:1534082, male:756420,  female:777662,  sexRatio:97, hh:326400,  hhSize:4.7, density:68,   popShare:2.5},
+    {region:'Songwe',        pop:1349569, male:663300,  female:686269,  sexRatio:97, hh:329163,  hhSize:4.1, density:59,   popShare:2.2},
+    // Zanzibar regions
+    {region:'Zanzibar West (Mjini Magharibi)', pop:593678, male:285340, female:308338, sexRatio:93, hh:120948, hhSize:4.9, density:3883, popShare:1.0},
+    {region:'Zanzibar North (Kaskazini Unguja)',pop:248459,male:120160,female:128299, sexRatio:94, hh:52756,  hhSize:4.7, density:547,  popShare:0.4},
+    {region:'Zanzibar South (Kusini Unguja)',  pop:139039, male:66900,  female:72139,  sexRatio:93, hh:33105,  hhSize:4.2, density:229,  popShare:0.3},
+    {region:'Pemba North (Kaskazini Pemba)',   pop:248719, male:119680, female:129039, sexRatio:93, hh:44414,  hhSize:5.6, density:474,  popShare:0.4},
+    {region:'Pemba South (Kusini Pemba)',      pop:198718, male:95400,  female:103318, sexRatio:92, hh:34864,  hhSize:5.7, density:817,  popShare:0.4},
   ]
+
+  // ── DISTRICT DATA per region (NBS 2022) ───────────────
+  const DISTRICT_DATA={
+    'Dar es Salaam':[
+      {district:'Kinondoni Municipal', pop:982328,  male:474825, female:507503, sexRatio:94, hh:299184, hhSize:3.3},
+      {district:'Dar es Salaam City',  pop:1649912, male:793731, female:856181, sexRatio:93, hh:458614, hhSize:3.6},
+      {district:'Temeke Municipal',    pop:1346674, male:655137, female:691537, sexRatio:95, hh:384046, hhSize:3.5},
+      {district:'Kigamboni Municipal', pop:317902,  male:156400, female:161502, sexRatio:97, hh:91135,  hhSize:3.5},
+      {district:'Ubungo Municipal',    pop:1086912, male:519925, female:566987, sexRatio:92, hh:317087, hhSize:3.4},
+    ],
+    'Dodoma':[
+      {district:'Dodoma City', pop:765179,  male:374440, female:390739, sexRatio:96, hh:187189, hhSize:4.1},
+      {district:'Chamwino',    pop:486176,  male:238360, female:247816, sexRatio:96, hh:119067, hhSize:4.1},
+      {district:'Kongwa',      pop:443867,  male:218000, female:225867, sexRatio:97, hh:108748, hhSize:4.1},
+      {district:'Mpwapwa',     pop:403247,  male:197500, female:205747, sexRatio:96, hh:98840,  hhSize:4.1},
+      {district:'Bahi',        pop:322526,  male:158090, female:164436, sexRatio:96, hh:79026,  hhSize:4.1},
+      {district:'Chemba',      pop:339333,  male:166400, female:172933, sexRatio:96, hh:83155,  hhSize:4.1},
+      {district:'Kondoa',      pop:244854,  male:120000, female:124854, sexRatio:96, hh:60012,  hhSize:4.1},
+      {district:'Kondoa Town', pop:80443,   male:39450,  female:40993,  sexRatio:96, hh:19718,  hhSize:4.1},
+    ],
+    'Mwanza':[
+      {district:'Ilemela',    pop:699580, male:344200, female:355380, sexRatio:97, hh:143036, hhSize:4.9},
+      {district:'Nyamagana',  pop:564650, male:276840, female:287810, sexRatio:96, hh:115439, hhSize:4.9},
+      {district:'Magu',       pop:468900, male:230410, female:238490, sexRatio:97, hh:95898,  hhSize:4.9},
+      {district:'Kwimba',     pop:422340, male:207540, female:214800, sexRatio:97, hh:86376,  hhSize:4.9},
+      {district:'Sengerema',  pop:552557, male:271110, female:281447, sexRatio:96, hh:113001, hhSize:4.9},
+    ],
+    'Arusha':[
+      {district:'Arusha City', pop:616827, male:304070, female:312757, sexRatio:97, hh:162323, hhSize:3.8},
+      {district:'Meru',        pop:366860, male:179850, female:187010, sexRatio:96, hh:96542,  hhSize:3.8},
+      {district:'Monduli',     pop:240912, male:118400, female:122512, sexRatio:97, hh:63398,  hhSize:3.8},
+      {district:'Ngorongoro',  pop:262390, male:130060, female:132330, sexRatio:98, hh:69050,  hhSize:3.8},
+      {district:'Longido',     pop:174505, male:86520,  female:87985,  sexRatio:98, hh:45922,  hhSize:3.8},
+      {district:'Karatu',      pop:276740, male:135750, female:140990, sexRatio:96, hh:72826,  hhSize:3.8},
+    ],
+  }
+
+  // ── WARD DATA per district ────────────────────────────
+  const WARD_DATA={
+    'Kinondoni':[
+      {ward:'Kigogo',      pop:45291,  male:22681, female:22610, sexRatio:100, hh:14156, hhSize:3.2},
+      {ward:'Mzimuni',     pop:20940,  male:10433, female:10507, sexRatio:99,  hh:5989,  hhSize:3.5},
+      {ward:'Magomeni',    pop:15241,  male:7629,  female:7612,  sexRatio:100, hh:4841,  hhSize:3.1},
+      {ward:'Ndugumbi',    pop:32862,  male:16102, female:16760, sexRatio:96,  hh:10577, hhSize:3.1},
+      {ward:'Tandale',     pop:43374,  male:21904, female:21470, sexRatio:102, hh:14126, hhSize:3.1},
+      {ward:'Kijitonyama', pop:39932,  male:19018, female:20914, sexRatio:91,  hh:12957, hhSize:3.1},
+      {ward:'Kinondoni',   pop:17337,  male:8380,  female:8957,  sexRatio:94,  hh:5823,  hhSize:3.0},
+      {ward:'Hananasif',   pop:27615,  male:13281, female:14334, sexRatio:93,  hh:9319,  hhSize:3.0},
+      {ward:'Mwananyamala',pop:38645,  male:18748, female:19897, sexRatio:94,  hh:12659, hhSize:3.1},
+      {ward:'Makumbusho',  pop:52347,  male:25876, female:26471, sexRatio:98,  hh:17575, hhSize:3.0},
+      {ward:'Makongo',     pop:35567,  male:16991, female:18576, sexRatio:91,  hh:11196, hhSize:3.2},
+      {ward:'Mbezi Juu',   pop:51485,  male:24336, female:27149, sexRatio:90,  hh:16146, hhSize:3.2},
+      {ward:'Wazo',        pop:153013, male:73027, female:79986, sexRatio:91,  hh:44155, hhSize:3.5},
+      {ward:'Mabwepande',  pop:66794,  male:32280, female:34514, sexRatio:94,  hh:19000, hhSize:3.5},
+      {ward:'Bunju',       pop:92587,  male:44190, female:48397, sexRatio:91,  hh:27500, hhSize:3.4},
+      {ward:'Mbweni',      pop:25970,  male:12502, female:13468, sexRatio:93,  hh:6948,  hhSize:3.7},
+      {ward:'Kunduchi',    pop:89814,  male:43232, female:46582, sexRatio:93,  hh:26125, hhSize:3.4},
+      {ward:'Kawe',        pop:67675,  male:32154, female:35521, sexRatio:91,  hh:20370, hhSize:3.3},
+      {ward:'Mikocheni',   pop:25433,  male:12076, female:13357, sexRatio:90,  hh:7325,  hhSize:3.5},
+      {ward:'Msasani',     pop:40406,  male:19985, female:20421, sexRatio:98,  hh:12397, hhSize:3.3},
+    ],
+    'Dodoma City':[
+      {ward:'Nzuguni',    pop:98420,  male:48120, female:50300, sexRatio:96, hh:24103, hhSize:4.1},
+      {ward:'Makulu',     pop:112380, male:55010, female:57370, sexRatio:96, hh:27532, hhSize:4.1},
+      {ward:'Ipagala',    pop:87640,  male:42900, female:44740, sexRatio:96, hh:21473, hhSize:4.1},
+      {ward:'Chamwino',   pop:102300, male:50090, female:52210, sexRatio:96, hh:25073, hhSize:4.1},
+      {ward:'Kikuyu',     pop:89210,  male:43700, female:45510, sexRatio:96, hh:21856, hhSize:4.1},
+      {ward:'Makutupora', pop:134680, male:65980, female:68700, sexRatio:96, hh:33005, hhSize:4.1},
+      {ward:'Veyula',     pop:140549, male:68820, female:71729, sexRatio:96, hh:34437, hhSize:4.1},
+    ],
+  }
+
+  // ── HH SIZE & DENSITY for national charts ────────────
+  const HH_SIZE_DATA=[
+    {region:'Simiyu',       size:6.7},{region:'Kusini Pemba',    size:5.7},{region:'Tabora',      size:5.7},
+    {region:'Kaskazini Pemba',size:5.6},{region:'Geita',         size:5.3},{region:'Katavi',      size:5.3},
+    {region:'Shinyanga',    size:5.3},{region:'Kigoma',           size:5.2},{region:'Singida',     size:5.1},
+    {region:'Mara',         size:5.0},{region:'Mjini Magharibi', size:4.9},{region:'Mwanza',       size:4.9},
+    {region:'Kaskazini Unguja',size:4.7},{region:'Manyara',      size:4.7},{region:'Rukwa',        size:4.7},
+    {region:'Kagera',       size:4.3},{region:'Kusini Unguja',   size:4.2},{region:'Songwe',       size:4.1},
+    {region:'Tanga',        size:4.1},{region:'Dodoma',          size:4.1},{region:'Ruvuma',       size:4.0},
+    {region:'Morogoro',     size:3.9},{region:'Arusha',          size:3.8},{region:'Mbeya',        size:3.7},
+    {region:'Iringa',       size:3.7},{region:'Pwani',           size:3.7},{region:'Kilimanjaro',  size:3.7},
+    {region:'Njombe',       size:3.6},{region:'Dar es Salaam',   size:3.5},{region:'Lindi',        size:3.4},
+    {region:'Mtwara',       size:3.3},
+  ]
+  const DENSITY_DATA=[
+    {region:'Mjini Magharibi',density:3883},{region:'Dar es Salaam',density:3865},{region:'Kusini Pemba',  density:817},
+    {region:'Kaskazini Unguja',density:547},{region:'Kaskazini Pemba',density:474},{region:'Mwanza',       density:391},
+    {region:'Kusini Unguja',  density:229},{region:'Geita',           density:148},{region:'Kilimanjaro',  density:141},
+    {region:'Shinyanga',      density:119},{region:'Kagera',          density:118},{region:'Mara',         density:109},
+    {region:'Tanga',          density:98}, {region:'Mtwara',          density:98}, {region:'Simiyu',       density:85},
+    {region:'Dodoma',         density:75}, {region:'Rukwa',           density:68}, {region:'Kigoma',       density:67},
+    {region:'Arusha',         density:63}, {region:'Pwani',           density:62}, {region:'Mbeya',        density:62},
+    {region:'Songwe',         density:59}, {region:'Morogoro',        density:45}, {region:'Tabora',       density:45},
+    {region:'Manyara',        density:43}, {region:'Njombe',          density:42}, {region:'Singida',      density:41},
+    {region:'Iringa',         density:34}, {region:'Ruvuma',          density:29}, {region:'Katavi',       density:25},
+    {region:'Lindi',          density:18},
+  ]
+
+  // ── Compute what table data to show ──────────────────
+  const {scope,region:selRegion,district:selDistrict,ward:selWard}=activeFilter
+  const isNationalScope = !selRegion
+  const isRegionScope   = selRegion && !selDistrict
+  const isDistrictScope = selDistrict && !selWard
+  const isWardScope     = !!selWard
+
+  const getTableData=()=>{
+    if(isNationalScope){
+      const filtered=REGION_POP_DATA.filter(r=>scope==='national'?true:scope==='zanzibar'?r.region.toLowerCase().includes('zanzibar')||r.region.toLowerCase().includes('pemba'):!r.region.toLowerCase().includes('zanzibar')&&!r.region.toLowerCase().includes('pemba'))
+      return{headers:['Region/Council','Both Sexes','Male','Female','Sex Ratio','Households','Avg HH Size'],rows:filtered.map(r=>[r.region,r.pop.toLocaleString(),r.male.toLocaleString(),r.female.toLocaleString(),r.sexRatio,(r.hh).toLocaleString(),r.hhSize.toFixed(1)]),title:'Population by Region — '+scope.charAt(0).toUpperCase()+scope.slice(1)}
+    }
+    if(isRegionScope){
+      const d=DISTRICT_DATA[selRegion]||[]
+      return{headers:['District/Council','Both Sexes','Male','Female','Sex Ratio','Households','Avg HH Size'],rows:d.map(r=>[r.district,r.pop.toLocaleString(),r.male.toLocaleString(),r.female.toLocaleString(),r.sexRatio,r.hh.toLocaleString(),r.hhSize.toFixed(1)]),title:'Population by District — '+selRegion+' Region'}
+    }
+    if(isDistrictScope){
+      const w=WARD_DATA[selDistrict]||[]
+      return{headers:['Ward','Both Sexes','Male','Female','Sex Ratio','Households','Avg HH Size'],rows:w.map(r=>[r.ward,r.pop.toLocaleString(),r.male.toLocaleString(),r.female.toLocaleString(),r.sexRatio,r.hh.toLocaleString(),r.hhSize.toFixed(1)]),title:'Population by Ward — '+selDistrict}
+    }
+    return{headers:[],rows:[],title:''}
+  }
+  const tableData=getTableData()
+
+  // ── Map card data ─────────────────────────────────────
+  const getMapData=()=>{
+    if(isNationalScope){
+      const filtered=REGION_POP_DATA.filter(r=>scope==='national'?true:scope==='zanzibar'?r.region.toLowerCase().includes('zanzibar')||r.region.toLowerCase().includes('pemba'):!r.region.toLowerCase().includes('zanzibar')&&!r.region.toLowerCase().includes('pemba'))
+      return{level:'national',items:filtered.map(r=>({name:r.region,value:r.popShare,label:r.popShare+'%',total:r.pop.toLocaleString()}))}
+    }
+    if(isRegionScope){
+      const d=DISTRICT_DATA[selRegion]||[]
+      if(!d.length)return null
+      const maxPop=Math.max(...d.map(x=>x.pop))
+      return{level:'region',items:d.map(r=>({name:r.district,value:(r.pop/maxPop)*100,label:r.pop.toLocaleString(),total:r.pop.toLocaleString()}))}
+    }
+    return null
+  }
+  const mapData=getMapData()
+
+  // Color intensity for choropleth-style card
+  const getIntensityColor=(pct)=>{
+    if(pct>=7) return {bg:'bg-[#7B1D1D]',     text:'text-red-200',     border:'border-red-900/40'}
+    if(pct>=5) return {bg:'bg-[#92400E]',     text:'text-orange-200',  border:'border-orange-800/40'}
+    if(pct>=4) return {bg:'bg-[#78350F]',     text:'text-amber-200',   border:'border-amber-800/40'}
+    if(pct>=3) return {bg:'bg-[#92400E]/70',  text:'text-yellow-200',  border:'border-yellow-800/40'}
+    if(pct>=2) return {bg:'bg-[#B45309]/50',  text:'text-yellow-100',  border:'border-yellow-700/30'}
+    return              {bg:'bg-[#D97706]/30',  text:'text-yellow-50',   border:'border-yellow-600/20'}
+  }
+
   const EMPLOYMENT=[
     {label:'Government Employees',note:'Teachers, Doctors, Officers',pct:18.4,color:'bg-[#00d4ff]',text:'text-[#00d4ff]'},
     {label:'Self Employed',        note:'Farmers, Business, Traders', pct:47.2,color:'bg-[#00ff9d]',text:'text-[#00ff9d]'},
@@ -367,19 +583,14 @@ function DemographicsContent({darkMode,t}){
     {level:'A-Level',pct:8},{level:'Certificate',pct:5},{level:'Diploma',pct:5},
     {level:"Bachelor's",pct:4},{level:"Master's+",pct:2},{level:'VETA / Other',pct:1},
   ]
+
   return(
     <div className="space-y-5">
       <div><h1 className={`font-bold text-xl sm:text-2xl ${t.text}`}>Demographics View</h1><p className={`text-xs mt-0.5 ${t.textSub}`}>Showing: <span className="text-[#00d4ff] font-mono capitalize">{scopeLabel}</span></p></div>
+
+      {/* Filter bar (now with Ward level) */}
       <GeoFilterBar onFilterChange={f=>{setActiveFilter(f);setPFilter(f.scope)}} darkMode={darkMode} t={t}/>
-      <div className="grid grid-cols-3 gap-3">
-        {DCARDS.map(({label,value,sub,color,bg})=>(
-          <div key={label} className={`${t.card} border ${t.cardBorder} rounded-xl p-4 hover:shadow-lg transition-all`}>
-            <p className={`text-[10px] font-mono tracking-widest uppercase mb-2 ${t.textDim}`}>{label}</p>
-            <p className={`font-bold text-lg sm:text-xl mb-1 ${t.text}`}>{value}</p>
-            <span className={`text-[9px] font-mono px-2 py-0.5 rounded-full border ${color} ${bg}`}>{sub}</span>
-          </div>
-        ))}
-      </div>
+
       {/* Employment Status Card */}
       <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
         <div className="flex items-center gap-2 mb-4">
@@ -393,13 +604,56 @@ function DemographicsContent({darkMode,t}){
                 <div><p className={`text-xs font-semibold ${t.text}`}>{label}</p><p className={`text-[9px] ${t.textDim}`}>{note}</p></div>
                 <span className={`text-sm font-bold shrink-0 ml-2 ${text}`}>{pct}%</span>
               </div>
-              <div className={`h-1.5 rounded-full ${darkMode?'bg-gray-200':'bg-[#1e2d45]'}`}>
-                <div className={`h-1.5 rounded-full ${color} transition-all duration-700`} style={{width:`${pct}%`}}/>
-              </div>
+              <div className={`h-1.5 rounded-full ${darkMode?'bg-gray-200':'bg-[#1e2d45]'}`}><div className={`h-1.5 rounded-full ${color} transition-all duration-700`} style={{width:`${pct}%`}}/></div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* ── MAP CARD: choropleth-style population distribution ── */}
+      {mapData&&(
+        <div className={`${t.card} border ${t.cardBorder} rounded-xl overflow-hidden`}>
+          <div className={`px-5 py-4 border-b ${t.border} flex items-center justify-between`}>
+            <div>
+              <p className={`font-bold text-sm ${t.text}`}>
+                {mapData.level==='national'?'Population Distribution by Region':'District Population Distribution — '+selRegion}
+              </p>
+              <p className={`text-[10px] ${t.textSub}`}>
+                {mapData.level==='national'
+                  ?'Percentage share of total population per region · NBS 2022 Census'
+                  :'Population count per district · NBS 2022 Census'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {mapData.level==='national'&&(
+                <div className="hidden sm:flex items-center gap-1.5">
+                  {[{c:'bg-[#D97706]/30',l:'<2%'},{c:'bg-[#B45309]/50',l:'2–3%'},{c:'bg-[#92400E]/70',l:'3–4%'},{c:'bg-[#78350F]',l:'4–5%'},{c:'bg-[#92400E]',l:'5–7%'},{c:'bg-[#7B1D1D]',l:'>7%'}].map(({c,l})=>(
+                    <div key={l} className="flex items-center gap-0.5"><div className={`w-3 h-3 rounded-sm ${c}`}/><span className="text-[8px] text-gray-500">{l}</span></div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
+              {mapData.items.map(({name,value,label,total})=>{
+                const c=getIntensityColor(value)
+                return(
+                  <div key={name} className={`relative rounded-lg border p-3 transition-all hover:scale-[1.02] cursor-default ${c.bg} ${c.border}`}>
+                    <p className={`text-[10px] font-semibold ${c.text} leading-tight mb-1`}>{name}</p>
+                    <p className={`text-sm font-extrabold ${c.text}`}>{label}</p>
+                    <p className="text-[9px] text-gray-400 mt-0.5">{total} people</p>
+                    {/* mini bar */}
+                    <div className="mt-1.5 h-0.5 rounded-full bg-white/10"><div className="h-0.5 rounded-full bg-white/50 transition-all" style={{width:`${Math.min(value*8,100)}%`}}/></div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Population Pyramid + Education */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
           <div className="flex items-start justify-between gap-3 mb-3">
@@ -439,9 +693,133 @@ function DemographicsContent({darkMode,t}){
           </div>
         </div>
       </div>
+
+      {/* ── POPULATION TABLE (after pyramid, changes per filter scope) ── */}
+      {tableData.rows.length>0&&(
+        <div className={`${t.card} border ${t.cardBorder} rounded-xl overflow-hidden`}>
+          <div className={`px-5 py-4 border-b ${t.border} flex items-center justify-between`}>
+            <div>
+              <p className={`font-bold text-sm ${t.text}`}>{tableData.title}</p>
+              <p className={`text-[10px] ${t.textSub}`}>NBS 2022 Population & Housing Census data</p>
+            </div>
+            <button className="flex items-center gap-1 text-[10px] text-[#00d4ff] font-mono hover:underline"><Download size={10}/>Export</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className={`border-b ${t.border}`}>
+                  {tableData.headers.map(h=><th key={h} className={`px-4 py-3 text-left text-[9px] font-mono uppercase tracking-widest ${t.textDim} whitespace-nowrap`}>{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.rows.map((row,i)=>(
+                  <tr key={i} className={`border-b ${t.border} ${t.rowHover} transition-all`}>
+                    <td className={`px-4 py-3 font-semibold ${t.text} whitespace-nowrap`}>{row[0]}</td>
+                    <td className={`px-4 py-3 font-mono font-bold ${t.text}`}>{row[1]}</td>
+                    <td className="px-4 py-3 font-mono text-[#00d4ff]">{row[2]}</td>
+                    <td className="px-4 py-3 font-mono text-[#ff6b9d]">{row[3]}</td>
+                    <td className={`px-4 py-3 font-mono ${t.textSub}`}>{row[4]}</td>
+                    <td className={`px-4 py-3 font-mono ${t.textSub}`}>{row[5]}</td>
+                    <td className={`px-4 py-3 font-mono font-bold ${parseFloat(row[6])>=4.3?'text-[#00ff9d]':parseFloat(row[6])>=3.5?'text-[#00d4ff]':'text-orange-400'}`}>{row[6]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className={`px-5 py-2 border-t ${t.border}`}>
+            <p className={`text-[9px] ${t.textDim}`}>Showing {tableData.rows.length} entries · Source: National Bureau of Statistics, United Republic of Tanzania</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── NATIONAL SCOPE EXTRA: Household Size + Population Density charts ── */}
+      {isNationalScope&&(
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {/* Household Size by Region (Image 6) */}
+          <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
+            <div className="mb-4">
+              <h2 className={`font-bold text-sm ${t.text}`}>Average Household Size by Region</h2>
+              <p className={`text-[10px] ${t.textSub} mt-0.5`}>Persons per household · National Average: <span className="text-[#00d4ff] font-mono font-bold">4.3</span></p>
+            </div>
+            <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
+              {HH_SIZE_DATA.map(({region,size})=>(
+                <div key={region} className="flex items-center gap-2">
+                  <p className={`text-[9px] ${t.textSub} w-32 shrink-0 truncate`} title={region}>{region}</p>
+                  <div className="flex-1 relative">
+                    <div className={`h-4 rounded flex items-center ${darkMode?'bg-gray-100':'bg-[#1e2d45]'}`} style={{minWidth:'100%'}}>
+                      <div
+                        className={`h-4 rounded transition-all ${size>=4.3?'bg-[#1D4ED8]':'bg-[#3B82F6]'}`}
+                        style={{width:`${(size/7)*100}%`}}
+                      />
+                      {/* National average line */}
+                      <div className="absolute h-full border-l-2 border-dashed border-[#00ff9d]/60" style={{left:`${(4.3/7)*100}%`}}/>
+                    </div>
+                  </div>
+                  <span className={`text-[9px] font-mono font-bold w-6 shrink-0 ${size>=4.3?'text-[#00d4ff]':t.textSub}`}>{size}</span>
+                </div>
+              ))}
+              {/* Summary rows */}
+              <div className={`border-t ${t.border} pt-2 mt-2 space-y-1.5`}>
+                {[{region:'Tanzania Zanzibar',size:5.0,color:'bg-gray-400'},{region:'Tanzania Mainland',size:4.3,color:'bg-yellow-400'},{region:'Tanzania (National)',size:4.3,color:'bg-[#00ff9d]'}].map(({region,size,color})=>(
+                  <div key={region} className="flex items-center gap-2">
+                    <p className={`text-[9px] font-bold ${t.text} w-32 shrink-0`}>{region}</p>
+                    <div className="flex-1 relative">
+                      <div className={`h-4 rounded ${darkMode?'bg-gray-100':'bg-[#1e2d45]'}`}>
+                        <div className={`h-4 rounded ${color}`} style={{width:`${(size/7)*100}%`}}/>
+                        <div className="absolute h-full border-l-2 border-dashed border-[#00ff9d]/60" style={{top:0,left:`${(4.3/7)*100}%`}}/>
+                      </div>
+                    </div>
+                    <span className={`text-[9px] font-mono font-bold w-6 shrink-0 ${t.text}`}>{size}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Population Density by Region (Image 7) */}
+          <div className={`${t.card} border ${t.cardBorder} rounded-xl p-4`}>
+            <div className="mb-4">
+              <h2 className={`font-bold text-sm ${t.text}`}>Population Density by Region</h2>
+              <p className={`text-[10px] ${t.textSub} mt-0.5`}>Persons per km² · Range: <span className="text-orange-400 font-mono font-bold">18</span> (Lindi) — <span className="text-red-400 font-mono font-bold">3,883</span> (Mjini Magharibi)</p>
+            </div>
+            <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-1">
+              {DENSITY_DATA.map(({region,density})=>(
+                <div key={region} className="flex items-center gap-2">
+                  <p className={`text-[9px] ${t.textSub} w-32 shrink-0 truncate`} title={region}>{region}</p>
+                  <div className="flex-1">
+                    <div className={`h-4 rounded ${darkMode?'bg-gray-100':'bg-[#1e2d45]'}`}>
+                      <div
+                        className={`h-4 rounded transition-all ${density>1000?'bg-red-500':density>500?'bg-orange-500':density>200?'bg-yellow-500':density>100?'bg-blue-500':'bg-[#1D4ED8]'}`}
+                        style={{width:`${Math.min((density/4000)*100,100)}%`}}
+                      />
+                    </div>
+                  </div>
+                  <span className={`text-[9px] font-mono font-bold w-10 text-right shrink-0 ${density>1000?'text-red-400':density>200?'text-orange-400':t.textSub}`}>{density.toLocaleString()}</span>
+                </div>
+              ))}
+              {/* Summary rows */}
+              <div className={`border-t ${t.border} pt-2 mt-2 space-y-1.5`}>
+                {[{region:'Tanzania Zanzibar',density:768,color:'bg-gray-400'},{region:'Tanzania Mainland',density:68,color:'bg-yellow-400'},{region:'Tanzania (National)',density:70,color:'bg-[#00ff9d]'}].map(({region,density,color})=>(
+                  <div key={region} className="flex items-center gap-2">
+                    <p className={`text-[9px] font-bold ${t.text} w-32 shrink-0`}>{region}</p>
+                    <div className="flex-1">
+                      <div className={`h-4 rounded ${darkMode?'bg-gray-100':'bg-[#1e2d45]'}`}>
+                        <div className={`h-4 rounded ${color}`} style={{width:`${Math.min((density/4000)*100,100)}%`}}/>
+                      </div>
+                    </div>
+                    <span className={`text-[9px] font-mono font-bold w-10 text-right shrink-0 ${t.text}`}>{density}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
+
 
 // ── INFRASTRUCTURE CONTENT ───────────────────────────────
 function InfrastructureContent({darkMode,t}){
