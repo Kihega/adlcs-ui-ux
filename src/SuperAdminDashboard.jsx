@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area } from 'recharts'
 import {
   Menu, X, Search, Bell, Settings, Sun, Moon, ChevronRight, ArrowUpRight, Plus,
@@ -42,6 +42,7 @@ import NewRegistrationModal from './modals/NewRegistrationModal'
 import AllRegionsModal      from './modals/AllRegionsModal'
 import AllActionsModal      from './modals/AllActionsModal'
 import { TZ_GEO, ALL_REGIONS, getDistricts, getVillages } from '/src/tanzania.js'
+import TanzaniaMap from './components/TanzaniaMap'
 
 // ── PYRAMID DATA ─────────────────────────────────────────
 const buildPyramid = (scale=1) => [
@@ -379,6 +380,7 @@ function DashboardContent({darkMode,t,onNewReg}){
 function DemographicsContent({darkMode,t}){
   const [pFilter,setPFilter]=useState('national')
   const [activeFilter,setActiveFilter]=useState({scope:'national',region:'',district:'',ward:'',village:''})
+  const [mapSelRegion,setMapSelRegion]=useState(null)
   const meta=filterMeta[pFilter]
   const rawData=pyramidData[pFilter]
   const chartData=rawData.map(d=>({age:d.age,male:-d.male,female:d.female}))
@@ -548,6 +550,26 @@ function DemographicsContent({darkMode,t}){
   const tableData=getTableData()
 
   // ── Map card data ─────────────────────────────────────
+  // Build data array for TanzaniaMap (national or mainland/zanzibar scope)
+  const mapRegionData=useMemo(()=>{
+    const scopeFilter = (r) => {
+      if(activeFilter.scope==='national') return true
+      if(activeFilter.scope==='zanzibar')
+        return r.region.toLowerCase().includes('zanzibar')||r.region.toLowerCase().includes('pemba')
+      return !r.region.toLowerCase().includes('zanzibar')&&!r.region.toLowerCase().includes('pemba')
+    }
+    return REGION_POP_DATA.filter(scopeFilter).map(r=>({
+      region:   r.region,
+      pop:      r.pop,
+      popShare: r.popShare,
+      density:  r.density,
+      hh:       r.hh,
+    }))
+  },[activeFilter.scope, REGION_POP_DATA])
+
+  // Show map only for national or region scope (not district/ward)
+  const showMap = !selDistrict && !selWard
+
   const getMapData=()=>{
     if(isNationalScope){
       const filtered=REGION_POP_DATA.filter(r=>scope==='national'?true:scope==='zanzibar'?r.region.toLowerCase().includes('zanzibar')||r.region.toLowerCase().includes('pemba'):!r.region.toLowerCase().includes('zanzibar')&&!r.region.toLowerCase().includes('pemba'))
@@ -561,9 +583,10 @@ function DemographicsContent({darkMode,t}){
     }
     return null
   }
+  // eslint-disable-next-line no-unused-vars
   const mapData=getMapData()
 
-  // Color intensity for choropleth-style card
+  // eslint-disable-next-line no-unused-vars
   const getIntensityColor=(pct)=>{
     if(pct>=7) return {bg:'bg-[#7B1D1D]',     text:'text-red-200',     border:'border-red-900/40'}
     if(pct>=5) return {bg:'bg-[#92400E]',     text:'text-orange-200',  border:'border-orange-800/40'}
@@ -610,47 +633,18 @@ function DemographicsContent({darkMode,t}){
         </div>
       </div>
 
-      {/* ── MAP CARD: choropleth-style population distribution ── */}
-      {mapData&&(
-        <div className={`${t.card} border ${t.cardBorder} rounded-xl overflow-hidden`}>
-          <div className={`px-5 py-4 border-b ${t.border} flex items-center justify-between`}>
-            <div>
-              <p className={`font-bold text-sm ${t.text}`}>
-                {mapData.level==='national'?'Population Distribution by Region':'District Population Distribution — '+selRegion}
-              </p>
-              <p className={`text-[10px] ${t.textSub}`}>
-                {mapData.level==='national'
-                  ?'Percentage share of total population per region · NBS 2022 Census'
-                  :'Population count per district · NBS 2022 Census'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {mapData.level==='national'&&(
-                <div className="hidden sm:flex items-center gap-1.5">
-                  {[{c:'bg-[#D97706]/30',l:'<2%'},{c:'bg-[#B45309]/50',l:'2–3%'},{c:'bg-[#92400E]/70',l:'3–4%'},{c:'bg-[#78350F]',l:'4–5%'},{c:'bg-[#92400E]',l:'5–7%'},{c:'bg-[#7B1D1D]',l:'>7%'}].map(({c,l})=>(
-                    <div key={l} className="flex items-center gap-0.5"><div className={`w-3 h-3 rounded-sm ${c}`}/><span className="text-[8px] text-gray-500">{l}</span></div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
-              {mapData.items.map(({name,value,label,total})=>{
-                const c=getIntensityColor(value)
-                return(
-                  <div key={name} className={`relative rounded-lg border p-3 transition-all hover:scale-[1.02] cursor-default ${c.bg} ${c.border}`}>
-                    <p className={`text-[10px] font-semibold ${c.text} leading-tight mb-1`}>{name}</p>
-                    <p className={`text-sm font-extrabold ${c.text}`}>{label}</p>
-                    <p className="text-[9px] text-gray-400 mt-0.5">{total} people</p>
-                    {/* mini bar */}
-                    <div className="mt-1.5 h-0.5 rounded-full bg-white/10"><div className="h-0.5 rounded-full bg-white/50 transition-all" style={{width:`${Math.min(value*8,100)}%`}}/></div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
+      {/* ── TANZANIA MAP (national & region scope only) ── */}
+      {showMap&&(
+        <TanzaniaMap
+          scope={activeFilter.scope}
+          selectedRegion={mapSelRegion}
+          regionData={mapRegionData}
+          onRegionClick={(name)=>{
+            setMapSelRegion(prev=>prev===name?null:name)
+          }}
+          darkMode={darkMode}
+          t={t}
+        />
       )}
 
       {/* Population Pyramid + Education */}
